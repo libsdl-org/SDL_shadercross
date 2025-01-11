@@ -437,10 +437,18 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 	include(ExternalProject)
 
 	if(NOT WIN32)
+		set(configure_CFLAGS "${CMAKE_C_FLAGS}")
+		if(APPLE)
+			foreach(osx_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+				string(APPEND configure_CFLAGS " -arch ${osx_arch}")
+			endforeach()
+		endif()
+		string(REPLACE ";" "$<SEMICOLON>" genex_CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
+
 		ExternalProject_Add(spirv_headers
 			GIT_REPOSITORY 		"https://github.com/KhronosGroup/SPIRV-Headers.git"
 			GIT_TAG 			"main"
-			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" "-DCMAKE_OSX_ARCHITECTURES=${genex_CMAKE_OSX_ARCHITECTURES}" "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}"
 			BUILD_COMMAND 		"${CMAKE_COMMAND}" "--build" "<BINARY_DIR>" --config "Release"
 			INSTALL_COMMAND 	"${CMAKE_COMMAND}" "--install" "<BINARY_DIR>" --config "Release"
 		)
@@ -450,7 +458,7 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 		ExternalProject_Add(vulkan_headers
 			GIT_REPOSITORY 		"https://github.com/KhronosGroup/Vulkan-Headers"
 			GIT_TAG 			"main"
-			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" "-DCMAKE_OSX_ARCHITECTURES=${genex_CMAKE_OSX_ARCHITECTURES}" "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}"
 			BUILD_COMMAND 		"${CMAKE_COMMAND}" "--build" "<BINARY_DIR>" --config "Release"
 			INSTALL_COMMAND 	"${CMAKE_COMMAND}" "--install" "<BINARY_DIR>" --config "Release"
 		)
@@ -461,7 +469,7 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 			DEPENDS 			spirv_headers vulkan_headers
 			GIT_REPOSITORY 		"https://github.com/KhronosGroup/Vulkan-Loader.git"
 			GIT_TAG 			"main"
-			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" "-DCMAKE_PREFIX_PATH=${vulkan_headers_install_dir}"
+			CMAKE_ARGS 			"-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_LIBDIR=lib" "-DCMAKE_INSTALL_BINDIR=bin" "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" "-DCMAKE_OSX_ARCHITECTURES=${genex_CMAKE_OSX_ARCHITECTURES}" "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}" "-DCMAKE_PREFIX_PATH=${vulkan_headers_install_dir}"
 			BUILD_COMMAND 		"${CMAKE_COMMAND}" "--build" "<BINARY_DIR>" --config "Release"
 			INSTALL_COMMAND 	"${CMAKE_COMMAND}" "--install" "<BINARY_DIR>" --config "Release"
 		)
@@ -474,7 +482,7 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 			URL					"https://dl.winehq.org/vkd3d/source/vkd3d-1.14.tar.xz"
 			URL_HASH			"SHA256=c94015d59ebe8ae72c4d802af5ca1517d9744548842a4e776534612a8d905485"
 			DOWNLOAD_EXTRACT_TIMESTAMP "1"
-			CONFIGURE_COMMAND 	"sh" "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" "--enable-tests=no" "--enable-demos=no" "--disable-doxygen-doc" "CFLAGS=-I${spirv_headers_install_dir}/include -I${vulkan_headers_install_dir}/include -I${vulkan_loader_install_dir}/include" "LDFLAGS=-L${vulkan_loader_install_dir}/lib" "BISON=${BISON_EXECUTABLE}"
+			CONFIGURE_COMMAND 	"sh" "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" "--enable-tests=no" "--enable-demos=no" "--disable-doxygen-doc" "CFLAGS=-I${spirv_headers_install_dir}/include -I${vulkan_headers_install_dir}/include -I${vulkan_loader_install_dir}/include ${configure_CFLAGS}" "LDFLAGS=-L${vulkan_loader_install_dir}/lib" "BISON=${BISON_EXECUTABLE}"
 			BUILD_COMMAND	 	"make"
 			INSTALL_COMMAND	 	"make" "install"
 		)
