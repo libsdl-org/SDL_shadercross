@@ -20,7 +20,7 @@ jobs:
           - { name: Windows (mingw64),             os: windows-latest, build-spirv-cross: false, vendored: false, shell: 'msys2 {0}', msystem: mingw64, msys-env: mingw-w64-x86_64, artifact: 'SDL3_shadercross-mingw64' }
           - { name: Ubuntu 22.04,                  os: ubuntu-22.04,   build-spirv-cross: true,  vendored: false, shell: sh, artifact: 'SDL3_shadercross-linux-x64' }
           - { name: Steam Linux Runtime (Sniper),  os: ubuntu-latest,  build-spirv-cross: false,  vendored: true, shell: sh, artifact: 'SDL3_shadercross-slrsniper', container: 'registry.gitlab.steamos.cloud/steamrt/sniper/sdk:beta' }
-          - { name: macOS,                         os: macos-latest,   build-spirv-cross: true,  vendored: true,  shell: sh, artifact: 'SDL3_shadercross-macos-arm64' }
+          - { name: macOS,                         os: macos-latest,   build-spirv-cross: true,  vendored: true,  shell: sh, artifact: 'SDL3_shadercross-macos-arm64', cmake-arguments: '-DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_C_FLAGS="-mmacosx-version-min=11.0" -DCMAKE_CXX_FLAGS="-mmacosx-version-min=11.0"' }
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +47,7 @@ jobs:
         id: sdl
         uses: libsdl-org/setup-sdl@main
         with:
+          cmake-arguments: ${{ matrix.platform.cmake-arguments }}
           cmake-generator: Ninja
           version: 3-head
           sdl-test: true
@@ -81,7 +82,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DSPIRV_CROSS_SHARED=ON \
             -DSPIRV_CROSS_STATIC=ON \
-            -DCMAKE_INSTALL_PREFIX=${PWD}/spirv_cross_prefix
+            -DCMAKE_INSTALL_PREFIX=${PWD}/spirv_cross_prefix \
+            ${{ matrix.platform.cmake-arguments }}
           cmake --build spirv_cross_build
           cmake --install spirv_cross_build
 
@@ -103,7 +105,8 @@ jobs:
             -DSDLSHADERCROSS_INSTALL=ON \
             -DSDLSHADERCROSS_INSTALL_RUNTIME=ON \
             -DSDLSHADERCROSS_INSTALL_CPACK=ON \
-            -DCMAKE_INSTALL_PREFIX="${PWD}/prefix"
+            -DCMAKE_INSTALL_PREFIX="${PWD}/prefix" \
+            ${{ matrix.platform.cmake-arguments }}
 
       - name: Build (CMake)
         id: build
@@ -125,7 +128,8 @@ jobs:
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
           cmake -S cmake/test -B cmake_config_build -GNinja \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.platform.cmake-arguments }}
           cmake --build cmake_config_build --verbose
 
       - uses: actions/upload-artifact@v4
