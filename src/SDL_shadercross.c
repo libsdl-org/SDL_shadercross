@@ -1979,7 +1979,6 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
             pipelineInfo);
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
-        createInfo.props = 0;
         createInfo.num_samplers = pipelineInfo->num_samplers;
         createInfo.num_readonly_storage_textures = pipelineInfo->num_readonly_storage_textures;
         createInfo.num_readonly_storage_buffers = pipelineInfo->num_readonly_storage_buffers;
@@ -1989,6 +1988,12 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         createInfo.threadcount_x = pipelineInfo->threadcount_x;
         createInfo.threadcount_y = pipelineInfo->threadcount_y;
         createInfo.threadcount_z = pipelineInfo->threadcount_z;
+
+        createInfo.props = 0;
+        if (info->name != NULL) {
+            createInfo.props = SDL_CreateProperties();
+            SDL_SetStringProperty(createInfo.props, SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING, info->name);
+        }
 
         SDL_ShaderCross_HLSL_Info hlslInfo;
         hlslInfo.source = transpileContext->translated_source;
@@ -2015,6 +2020,10 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         }
 
         shaderObject = SDL_CreateGPUComputePipeline(device, &createInfo);
+
+        if (createInfo.props != 0) {
+            SDL_DestroyProperties(createInfo.props);
+        }
     } else {
         SDL_GPUShaderCreateInfo createInfo;
         SDL_ShaderCross_GraphicsShaderMetadata *shaderInfo = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
@@ -2025,11 +2034,16 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
         createInfo.stage = (SDL_GPUShaderStage)info->shader_stage;
-        createInfo.props = 0;
         createInfo.num_samplers = shaderInfo->num_samplers;
         createInfo.num_storage_textures = shaderInfo->num_storage_textures;
         createInfo.num_storage_buffers = shaderInfo->num_storage_buffers;
         createInfo.num_uniform_buffers = shaderInfo->num_uniform_buffers;
+
+        createInfo.props = 0;
+        if (info->name != NULL) {
+            createInfo.props = SDL_CreateProperties();
+            SDL_SetStringProperty(createInfo.props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING, info->name);
+        }
 
         SDL_ShaderCross_HLSL_Info hlslInfo;
         hlslInfo.source = transpileContext->translated_source;
@@ -2056,6 +2070,10 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         }
 
         shaderObject = SDL_CreateGPUShader(device, &createInfo);
+
+        if (createInfo.props != 0) {
+            SDL_DestroyProperties(createInfo.props);
+        }
     }
 
     SDL_ShaderCross_INTERNAL_DestroyTranspileContext(transpileContext);
@@ -2205,7 +2223,6 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
             createInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
-            createInfo.props = 0;
             createInfo.num_samplers = pipelineMetadata->num_samplers;
             createInfo.num_readonly_storage_textures = pipelineMetadata->num_readonly_storage_textures;
             createInfo.num_readonly_storage_buffers = pipelineMetadata->num_readonly_storage_buffers;
@@ -2215,7 +2232,20 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             createInfo.threadcount_x = pipelineMetadata->threadcount_x;
             createInfo.threadcount_y = pipelineMetadata->threadcount_y;
             createInfo.threadcount_z = pipelineMetadata->threadcount_z;
-            return SDL_CreateGPUComputePipeline(device, &createInfo);
+
+            createInfo.props = 0;
+            if (info->name != NULL) {
+                createInfo.props = SDL_CreateProperties();
+                SDL_SetStringProperty(createInfo.props, SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING, info->name);
+            }
+
+            SDL_GPUComputePipeline *result = SDL_CreateGPUComputePipeline(device, &createInfo);
+
+            if (createInfo.props != 0) {
+                SDL_DestroyProperties(createInfo.props);
+            }
+
+            return result;
         } else {
             SDL_GPUShaderCreateInfo createInfo;
             SDL_ShaderCross_GraphicsShaderMetadata *shaderMetadata = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
@@ -2228,12 +2258,24 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             createInfo.entrypoint = info->entrypoint;
             createInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             createInfo.stage = (SDL_GPUShaderStage)info->shader_stage;
-            createInfo.props = 0;
             createInfo.num_samplers = shaderMetadata->num_samplers;
             createInfo.num_storage_textures = shaderMetadata->num_storage_textures;
             createInfo.num_storage_buffers = shaderMetadata->num_storage_buffers;
             createInfo.num_uniform_buffers = shaderMetadata->num_uniform_buffers;
-            return SDL_CreateGPUShader(device, &createInfo);
+
+            createInfo.props = 0;
+            if (info->name != NULL) {
+                createInfo.props = SDL_CreateProperties();
+                SDL_SetStringProperty(createInfo.props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING, info->name);
+            }
+
+            SDL_GPUShader *result = SDL_CreateGPUShader(device, &createInfo);
+
+            if (createInfo.props != 0) {
+                SDL_DestroyProperties(createInfo.props);
+            }
+
+            return result;
         }
     } else if (shader_formats & SDL_GPU_SHADERFORMAT_MSL) {
         format = SDL_GPU_SHADERFORMAT_MSL;
