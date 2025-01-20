@@ -968,10 +968,12 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         size_t num_separate_samplers = 0;
         size_t num_separate_images = 0;
 
-        spvc_msl_resource_binding bufferBindings[32];
+        spvc_msl_resource_binding_2 bufferBindings[32];
+        SDL_zeroa(bufferBindings);
         Uint32 numBufferBindings = 0;
 
-        spvc_msl_resource_binding textureBindings[32];
+        spvc_msl_resource_binding_2 textureBindings[32];
+        SDL_zeroa(textureBindings);
         Uint32 numTextureBindings = 0;
 
         result = spvc_compiler_create_shader_resources(compiler, &resources);
@@ -1027,6 +1029,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1063,6 +1066,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1100,6 +1104,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1136,6 +1141,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             bufferBindings[numBufferBindings].stage = executionModel;
             bufferBindings[numBufferBindings].desc_set = descriptor_set_index;
             bufferBindings[numBufferBindings].binding = binding_index;
+            bufferBindings[numBufferBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numBufferBindings += 1;
@@ -1172,60 +1178,51 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             bufferBindings[numBufferBindings].stage = executionModel;
             bufferBindings[numBufferBindings].desc_set = descriptor_set_index;
             bufferBindings[numBufferBindings].binding = binding_index;
+            bufferBindings[numBufferBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numBufferBindings += 1;
         }
 
-        // Calculate buffer binding offsets
-        Uint32 bufferBindingsPerSet[4];
-        Uint32 bufferBindingOffsets[4];
-        SDL_zeroa(bufferBindingsPerSet);
-        SDL_zeroa(bufferBindingOffsets);
-
-        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
-            bufferBindingsPerSet[bufferBindings[i].desc_set] += 1;
-        }
-
-        for (Uint32 i = 1; i < 4; i += 1) {
-            bufferBindingOffsets[i] = bufferBindingOffsets[i - 1] + bufferBindingsPerSet[i - 1];
-        }
-
-        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
-            bufferBindings[i].msl_buffer = bufferBindingOffsets[bufferBindings[i].desc_set] + bufferBindings[i].binding;
-            result = spvc_compiler_msl_add_resource_binding(compiler, &bufferBindings[i]);
-
-            if (result < 0) {
-                SPVC_ERROR(spvc_compiler_msl_add_resource_binding);
-                spvc_context_destroy(context);
-                return NULL;
-            }
-        }
-
-        // Calculate texture binding offsets
-        Uint32 textureBindingsPerSet[4];
-        Uint32 textureBindingOffsets[4];
-        SDL_zeroa(textureBindingsPerSet);
-        SDL_zeroa(textureBindingOffsets);
-
+        // Textures come first so we can just use the binding slot
         for (Uint32 i = 0; i < numTextureBindings; i += 1) {
-            textureBindingsPerSet[textureBindings[i].desc_set] += 1;
-        }
-
-        for (Uint32 i = 1; i < 4; i += 1) {
-            textureBindingOffsets[i] = textureBindingOffsets[i - 1] + textureBindingsPerSet[i - 1];
-        }
-
-        for (Uint32 i = 0; i < numTextureBindings; i += 1) {
-            textureBindings[i].msl_texture = textureBindingOffsets[textureBindings[i].desc_set] + textureBindings[i].binding;
-            textureBindings[i].msl_sampler = textureBindingOffsets[textureBindings[i].desc_set] + textureBindings[i].binding;
-            result = spvc_compiler_msl_add_resource_binding(compiler, &textureBindings[i]);
+            textureBindings[i].msl_texture = textureBindings[i].binding;
+            textureBindings[i].msl_sampler = textureBindings[i].binding;
+            result = spvc_compiler_msl_add_resource_binding_2(compiler, &textureBindings[i]);
         }
 
         if (result < 0) {
-            SPVC_ERROR(spvc_compiler_msl_add_resource_binding);
+            SPVC_ERROR(spvc_compiler_msl_add_resource_binding_2);
             spvc_context_destroy(context);
             return NULL;
+        }
+
+        // Calculate number of uniform buffers
+        Uint32 uniformBufferCount = 0;
+
+        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
+            if (bufferBindings[i].desc_set == 1 || bufferBindings[i].desc_set == 3) {
+                uniformBufferCount += 1;
+            }
+        }
+
+        // Calculate resource indices
+        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
+            if (bufferBindings[i].desc_set == 1 || bufferBindings[i].desc_set == 3) {
+                // Uniform buffers are alone in the descriptor set so we just use the binding slot
+                bufferBindings[i].msl_buffer = bufferBindings[i].binding;
+            } else {
+                // Subtract by the texture count because the textures precede the storage buffers in the descriptor set
+                bufferBindings[i].msl_buffer = uniformBufferCount + (bufferBindings[i].binding - numTextureBindings);
+            }
+
+            result = spvc_compiler_msl_add_resource_binding_2(compiler, &bufferBindings[i]);
+
+            if (result < 0) {
+                SPVC_ERROR(spvc_compiler_msl_add_resource_binding_2);
+                spvc_context_destroy(context);
+                return NULL;
+            }
         }
     }
 
@@ -1239,10 +1236,10 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         size_t num_separate_samplers = 0;
         size_t num_separate_images = 0;
 
-        spvc_msl_resource_binding bufferBindings[32];
+        spvc_msl_resource_binding_2 bufferBindings[32];
         Uint32 numBufferBindings = 0;
 
-        spvc_msl_resource_binding textureBindings[32];
+        spvc_msl_resource_binding_2 textureBindings[32];
         Uint32 numTextureBindings = 0;
 
         result = spvc_compiler_create_shader_resources(compiler, &resources);
@@ -1298,6 +1295,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1337,6 +1335,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1377,6 +1376,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1405,6 +1405,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1434,6 +1435,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             textureBindings[numTextureBindings].stage = executionModel;
             textureBindings[numTextureBindings].desc_set = descriptor_set_index;
             textureBindings[numTextureBindings].binding = binding_index;
+            textureBindings[numTextureBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numTextureBindings += 1;
@@ -1470,6 +1472,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             bufferBindings[numBufferBindings].stage = executionModel;
             bufferBindings[numBufferBindings].desc_set = descriptor_set_index;
             bufferBindings[numBufferBindings].binding = binding_index;
+            bufferBindings[numBufferBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numBufferBindings += 1;
@@ -1510,6 +1513,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             bufferBindings[numBufferBindings].stage = executionModel;
             bufferBindings[numBufferBindings].desc_set = descriptor_set_index;
             bufferBindings[numBufferBindings].binding = binding_index;
+            bufferBindings[numBufferBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numBufferBindings += 1;
@@ -1527,60 +1531,68 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             bufferBindings[numBufferBindings].stage = executionModel;
             bufferBindings[numBufferBindings].desc_set = descriptor_set_index;
             bufferBindings[numBufferBindings].binding = binding_index;
+            bufferBindings[numBufferBindings].count = 1;
             // assign binding index after we have collected all resources
 
             numBufferBindings += 1;
         }
 
-        // Calculate buffer binding offsets
-        Uint32 bufferBindingsPerSet[4];
-        Uint32 bufferBindingOffsets[4];
-        SDL_zeroa(bufferBindingsPerSet);
-        SDL_zeroa(bufferBindingOffsets);
+        // Calculate binding offsets
 
-        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
-            bufferBindingsPerSet[bufferBindings[i].desc_set] += 1;
+        Uint32 readonlyTextureCount = 0;
+        Uint32 readwriteTextureCount = 0;
+
+        for (Uint32 i = 0; i < numTextureBindings; i += 1) {
+            if (textureBindings[i].desc_set == 0) {
+                readonlyTextureCount += 1;
+            } else {
+                readwriteTextureCount += 1;
+            }
         }
 
-        for (Uint32 i = 1; i < 4; i += 1) {
-            bufferBindingOffsets[i] = bufferBindingOffsets[i - 1] + bufferBindingsPerSet[i - 1];
-        }
+        Uint32 readonlyBufferCount = 0;
 
         for (Uint32 i = 0; i < numBufferBindings; i += 1) {
-            bufferBindings[i].msl_buffer = bufferBindingOffsets[bufferBindings[i].desc_set] + bufferBindings[i].binding;
-            result = spvc_compiler_msl_add_resource_binding(compiler, &bufferBindings[i]);
+            if (bufferBindings[i].desc_set == 0) {
+                readonlyBufferCount += 1;
+            }
+        }
 
+        // Calculate resource indices
+
+        for (Uint32 i = 0; i < numTextureBindings; i += 1) {
+            if (textureBindings[i].desc_set == 0) {
+                // readonly textures
+                textureBindings[i].msl_texture = textureBindings[i].binding;
+                textureBindings[i].msl_sampler = textureBindings[i].binding;
+            } else {
+                // readwrite textures
+                textureBindings[i].msl_texture = readonlyTextureCount + textureBindings[i].binding;
+                textureBindings[i].msl_sampler = readonlyTextureCount + textureBindings[i].binding;
+            }
+            result = spvc_compiler_msl_add_resource_binding_2(compiler, &textureBindings[i]);
             if (result < 0) {
-                SPVC_ERROR(spvc_compiler_msl_add_resource_binding);
+                SPVC_ERROR(spvc_compiler_msl_add_resource_binding_2);
                 spvc_context_destroy(context);
                 return NULL;
             }
         }
 
-        // Calculate texture binding offsets
-        Uint32 textureBindingsPerSet[4];
-        Uint32 textureBindingOffsets[4];
-        SDL_zeroa(textureBindingsPerSet);
-        SDL_zeroa(textureBindingOffsets);
+        for (Uint32 i = 0; i < numBufferBindings; i += 1) {
+            if (bufferBindings[i].desc_set == 0) {
+                // Subtract by the readonly texture count because they precede readonly buffers in the descriptor set
+                bufferBindings[i].msl_buffer = bufferBindings[i].binding - readonlyTextureCount;
+            } else {
+                // Subtract by the readwrite texture count because they precede readwrite buffers in the descriptor set
+                bufferBindings[i].msl_buffer = readonlyBufferCount + bufferBindings[i].binding - readwriteTextureCount;
+            }
+            result = spvc_compiler_msl_add_resource_binding_2(compiler, &bufferBindings[i]);
 
-        for (Uint32 i = 0; i < numTextureBindings; i += 1) {
-            textureBindingsPerSet[textureBindings[i].desc_set] += 1;
-        }
-
-        for (Uint32 i = 1; i < 4; i += 1) {
-            textureBindingOffsets[i] = textureBindingOffsets[i - 1] + textureBindingsPerSet[i - 1];
-        }
-
-        for (Uint32 i = 0; i < numTextureBindings; i += 1) {
-            textureBindings[i].msl_texture = textureBindingOffsets[textureBindings[i].desc_set] + textureBindings[i].binding;
-            textureBindings[i].msl_sampler = textureBindingOffsets[textureBindings[i].desc_set] + textureBindings[i].binding;
-            result = spvc_compiler_msl_add_resource_binding(compiler, &textureBindings[i]);
-        }
-
-        if (result < 0) {
-            SPVC_ERROR(spvc_compiler_msl_add_resource_binding);
-            spvc_context_destroy(context);
-            return NULL;
+            if (result < 0) {
+                SPVC_ERROR(spvc_compiler_msl_add_resource_binding_2);
+                spvc_context_destroy(context);
+                return NULL;
+            }
         }
     }
 
