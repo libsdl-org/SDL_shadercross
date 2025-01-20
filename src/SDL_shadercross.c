@@ -1209,7 +1209,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         // Calculate resource indices
         for (Uint32 i = 0; i < numBufferBindings; i += 1) {
             if (bufferBindings[i].desc_set == 1 || bufferBindings[i].desc_set == 3) {
-                // Uniform buffers are alone in the descriptor set so we just use the binding slot
+                // Uniform buffers are alone in the descriptor set
                 bufferBindings[i].msl_buffer = bufferBindings[i].binding;
             } else {
                 // Subtract by the texture count because the textures precede the storage buffers in the descriptor set
@@ -1545,19 +1545,19 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         for (Uint32 i = 0; i < numTextureBindings; i += 1) {
             if (textureBindings[i].desc_set == 0) {
                 readonlyTextureCount += 1;
-            } else {
+            } else if (textureBindings[i].desc_set == 1) {
                 readwriteTextureCount += 1;
             }
         }
 
+        Uint32 uniformBufferCount = 0;
         Uint32 readonlyBufferCount = 0;
-        Uint32 readwriteBufferCount = 0;
 
         for (Uint32 i = 0; i < numBufferBindings; i += 1) {
             if (bufferBindings[i].desc_set == 0) {
                 readonlyBufferCount += 1;
-            } else if (bufferBindings[i].desc_set == 1) {
-                readwriteBufferCount += 1;
+            } else if (bufferBindings[i].desc_set == 2) {
+                uniformBufferCount += 1;
             }
         }
 
@@ -1584,13 +1584,13 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         for (Uint32 i = 0; i < numBufferBindings; i += 1) {
             if (bufferBindings[i].desc_set == 0) {
                 // Subtract by the readonly texture count because they precede readonly buffers in the descriptor set
-                bufferBindings[i].msl_buffer = bufferBindings[i].binding - readonlyTextureCount;
+                bufferBindings[i].msl_buffer = uniformBufferCount + (bufferBindings[i].binding - readonlyTextureCount);
             } else if (bufferBindings[i].desc_set == 1) {
                 // Subtract by the readwrite texture count because they precede readwrite buffers in the descriptor set
-                bufferBindings[i].msl_buffer = readonlyBufferCount + bufferBindings[i].binding - readwriteTextureCount;
+                bufferBindings[i].msl_buffer = uniformBufferCount + readonlyBufferCount + (bufferBindings[i].binding - readwriteTextureCount);
             } else {
                 // Uniform buffers are alone in the descriptor set
-                bufferBindings[i].msl_buffer = readonlyBufferCount + readwriteBufferCount + bufferBindings[i].binding;
+                bufferBindings[i].msl_buffer = bufferBindings[i].binding;
             }
             result = spvc_compiler_msl_add_resource_binding_2(compiler, &bufferBindings[i]);
 
