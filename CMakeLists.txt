@@ -114,6 +114,10 @@ if(SDLSHADERCROSS_VENDORED)
 	endif()
 
 	if(SDLSHADERCROSS_DXC)
+		# LLVM dependencies of dxc does not support building as a shared library
+		set(BUILD_SHARED_LIBS OFF)
+		# Enabling HLSL_ENABLE_DEBUG_ITERATORS blocks DirectXShaderCompiler from adding /D_ITERATOR_DEBUG_LEVEL=0
+		set(HLSL_ENABLE_DEBUG_ITERATORS ON)
 		set(DXC_COVERAGE OFF)
 		set(HLSL_INCLUDE_TESTS OFF)
 		set(LLVM_INCLUDE_TESTS OFF)
