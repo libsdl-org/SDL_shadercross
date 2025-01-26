@@ -400,6 +400,7 @@ int main(int argc, char *argv[])
             case SHADERFORMAT_JSON: {
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
                     SDL_ShaderCross_ComputePipelineMetadata info;
+                    info.props = 0;
                     if (SDL_ShaderCross_ReflectComputeSPIRV(
                         fileData,
                         fileSize,
@@ -411,6 +412,7 @@ int main(int argc, char *argv[])
                     }
                 } else {
                     SDL_ShaderCross_GraphicsShaderMetadata info;
+                    info.props = 0;
                     if (SDL_ShaderCross_ReflectGraphicsSPIRV(
                         fileData,
                         fileSize,
@@ -561,6 +563,7 @@ int main(int argc, char *argv[])
 
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
                     SDL_ShaderCross_ComputePipelineMetadata info;
+                    info.props = 0;
                     bool result = SDL_ShaderCross_ReflectComputeSPIRV(
                         spirv,
                         bytecodeSize,
@@ -575,6 +578,7 @@ int main(int argc, char *argv[])
                     }
                 } else {
                     SDL_ShaderCross_GraphicsShaderMetadata info;
+                    info.props = 0;
                     bool result = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         spirv,
                         bytecodeSize,

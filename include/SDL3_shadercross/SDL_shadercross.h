@@ -51,6 +51,8 @@ typedef struct SDL_ShaderCross_GraphicsShaderMetadata
     Uint32 num_storage_textures;  /**< The number of storage textures defined in the shader. */
     Uint32 num_storage_buffers;   /**< The number of storage buffers defined in the shader. */
     Uint32 num_uniform_buffers;   /**< The number of uniform buffers defined in the shader. */
+
+    SDL_PropertiesID props;       /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
 } SDL_ShaderCross_GraphicsShaderMetadata;
 
 typedef struct SDL_ShaderCross_ComputePipelineMetadata
@@ -64,6 +66,8 @@ typedef struct SDL_ShaderCross_ComputePipelineMetadata
     Uint32 threadcount_x;                   /**< The number of threads in the X dimension. */
     Uint32 threadcount_y;                   /**< The number of threads in the Y dimension. */
     Uint32 threadcount_z;                   /**< The number of threads in the Z dimension. */
+
+    SDL_PropertiesID props;                 /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
 } SDL_ShaderCross_ComputePipelineMetadata;
 
 typedef struct SDL_ShaderCross_SPIRV_Info
