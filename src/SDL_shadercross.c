@@ -307,7 +307,7 @@ struct IDxcUtils
 /* *INDENT-ON* */ // clang-format on
 
 /* DXCompiler */
-#if defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
+#if defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES) || defined(SDL_PLATFORM_WINDOWS)
 extern HRESULT __stdcall DxcCreateInstance(REFCLSID rclsid, REFIID riid, LPVOID* ppv);
 #else
 extern HRESULT DxcCreateInstance(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
