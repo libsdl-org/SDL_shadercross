@@ -49,7 +49,7 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-I | --include <value>", "HLSL include directory. Only used with HLSL source.");
     SDL_Log("  %-*s %s", column_width, "-D<name>[=<value>]", "HLSL define. Only used with HLSL source. Can be repeated.");
     SDL_Log("  %-*s %s", column_width, "", "If =<value> is omitted the define will be treated as equal to 1.");
-    SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible.");
+    SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
 }
 
 void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_GraphicsShaderMetadata *info)
