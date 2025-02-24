@@ -418,9 +418,8 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
             SDL_free(entryPointUtf16);
             return NULL;
         }
-        args[2] = (LPCWSTR)L"-I";
-        args[3] = includeDirUtf16;
-        argCount += 2;
+        args[argCount++] = (LPCWSTR)L"-I";
+        args[argCount++] = includeDirUtf16;
     }
 
     source.Ptr = info->source;
