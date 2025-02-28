@@ -893,7 +893,8 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     SDL_ShaderCross_ShaderStage shaderStage, // only used for MSL
     const Uint8 *code,
     size_t codeSize,
-    const char *entrypoint
+    const char *entrypoint,
+    SDL_PropertiesID props
 ) {
     spvc_result result;
     spvc_context context = NULL;
@@ -939,7 +940,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL, shadermodel);
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV, 1);
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_FLATTEN_MATRIX_VERTEX_INPUT_SEMANTICS, 1);
-        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_USE_ENTRY_POINT_NAME, true);
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_USE_ENTRY_POINT_NAME, !SDL_GetBooleanProperty(props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, false));
         spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_POINT_SIZE_COMPAT, true);
     }
 
@@ -2012,7 +2013,8 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
-        info->entrypoint);
+        info->entrypoint,
+        info->props);
 
     if (transpileContext == NULL) {
         return NULL;
@@ -2139,7 +2141,8 @@ void *SDL_ShaderCross_TranspileMSLFromSPIRV(
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
-        info->entrypoint
+        info->entrypoint,
+        info->props
     );
 
     if (context == NULL) {
@@ -2159,11 +2162,12 @@ void *SDL_ShaderCross_TranspileHLSLFromSPIRV(
 {
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_HLSL,
-        60,
+        SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, false) ? 50 : 60,
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
-        info->entrypoint
+        info->entrypoint,
+        info->props
     );
 
     if (context == NULL) {
@@ -2188,7 +2192,8 @@ void *SDL_ShaderCross_CompileDXBCFromSPIRV(
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
-        info->entrypoint);
+        info->entrypoint,
+        info->props);
 
     if (context == NULL) {
         return NULL;
@@ -2228,7 +2233,8 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
-        info->entrypoint);
+        info->entrypoint,
+        info->props);
 
     if (context == NULL) {
         return NULL;
