@@ -49,6 +49,7 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-I | --include <value>", "HLSL include directory. Only used with HLSL source.");
     SDL_Log("  %-*s %s", column_width, "-D<name>[=<value>]", "HLSL define. Only used with HLSL source. Can be repeated.");
     SDL_Log("  %-*s %s", column_width, "", "If =<value> is omitted the define will be treated as equal to 1.");
+    SDL_Log("  %-*s %s", column_width, "--msl-version <value>", "Target MSL version. Only used when transpiling to MSL.");
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
 }
 
@@ -103,6 +104,7 @@ int main(int argc, char *argv[])
     size_t numDefines = 0;
 
     bool enableDebug = false;
+    int mslVersion = 10200;  // 1.2.0 is the default
 
     for (int i = 1; i < argc; i += 1) {
         char *arg = argv[i];
@@ -224,6 +226,14 @@ int main(int argc, char *argv[])
                     defines[numDefines - 1].name = SDL_malloc(len);
                     SDL_utf8strlcpy(defines[numDefines - 1].name, (const char *)argv[i] + 2, len);
                 }
+            } else if (SDL_strcmp(arg, "--msl-version") == 0) {
+                if (i + 1 >= argc) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s requires an argument", arg);
+                    print_help();
+                    return 1;
+                }
+                i += 1;
+                mslVersion = SDL_atoi(argv[i]);
             } else if (SDL_strcmp(argv[i], "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
                 enableDebug = true;
             } else if (SDL_strcmp(arg, "--") == 0) {
@@ -334,7 +344,8 @@ int main(int argc, char *argv[])
         spirvInfo.shader_stage = shaderStage;
         spirvInfo.enable_debug = enableDebug;
         spirvInfo.name = filename;
-        spirvInfo.props = 0;
+        spirvInfo.props = SDL_CreateProperties();
+        SDL_SetNumberProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
 
         switch (destinationFormat) {
             case SHADERFORMAT_DXBC: {
@@ -487,7 +498,8 @@ int main(int argc, char *argv[])
                     spirvInfo.entrypoint = entrypointName;
                     spirvInfo.shader_stage = shaderStage;
                     spirvInfo.enable_debug = enableDebug;
-                    spirvInfo.props = 0;
+                    spirvInfo.props = SDL_CreateProperties();
+                    SDL_SetNumberProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
                     char *buffer = SDL_ShaderCross_TranspileMSLFromSPIRV(
                         &spirvInfo);
                     if (buffer == NULL) {

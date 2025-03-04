@@ -957,6 +957,11 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         }
     }
 
+    if(backend == SPVC_BACKEND_MSL) {
+        unsigned mslVersion = SDL_GetNumberProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, SPVC_MAKE_MSL_VERSION(1, 2, 0));
+        spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VERSION, mslVersion);
+    }
+
     // MSL doesn't have descriptor sets, so we have to set up index remapping
     if (backend == SPVC_BACKEND_MSL && shaderStage != SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
         spvc_resources resources;
