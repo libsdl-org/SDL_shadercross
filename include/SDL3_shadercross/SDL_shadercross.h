@@ -84,6 +84,8 @@ typedef struct SDL_ShaderCross_SPIRV_Info
 
 #define SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY "SDL.shadercross.spirv.pssl.compatibility"
 
+#define SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION "SDL.shadercross.spirv.msl.version"
+
 typedef struct SDL_ShaderCross_HLSL_Define
 {
     char *name;   /**< The define name. */
