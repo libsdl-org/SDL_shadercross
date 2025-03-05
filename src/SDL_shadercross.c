@@ -966,7 +966,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         }
     }
 
-    if(backend == SPVC_BACKEND_MSL) {
+    if (backend == SPVC_BACKEND_MSL) {
         const char *_mslVersion = SDL_GetStringProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, "1.2.0");
         int mslVersion = parse_version_number(_mslVersion);
         if (mslVersion == - 1) {
