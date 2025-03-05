@@ -345,8 +345,9 @@ int main(int argc, char *argv[])
         spirvInfo.enable_debug = enableDebug;
         spirvInfo.name = filename;
         spirvInfo.props = SDL_CreateProperties();
-        if(mslVersion)
+        if (mslVersion) {
             SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
+        }
 
         switch (destinationFormat) {
             case SHADERFORMAT_DXBC: {
@@ -500,8 +501,9 @@ int main(int argc, char *argv[])
                     spirvInfo.shader_stage = shaderStage;
                     spirvInfo.enable_debug = enableDebug;
                     spirvInfo.props = SDL_CreateProperties();
-                    if(mslVersion)
+                    if (mslVersion) {
                         SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
+                    }
                     char *buffer = SDL_ShaderCross_TranspileMSLFromSPIRV(
                         &spirvInfo);
                     if (buffer == NULL) {

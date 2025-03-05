@@ -122,8 +122,9 @@ struct IDxcBlob
 static int parse_version_number(const char* str)
 {
     unsigned major, minor, patch;
-    if(SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3)
+    if (SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3) {
         return (major * 10000) + (minor) * 100 + patch;
+    }
     return -1;
 }
 
@@ -968,7 +969,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     if(backend == SPVC_BACKEND_MSL) {
         const char *_mslVersion = SDL_GetStringProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, "1.2.0");
         int mslVersion = parse_version_number(_mslVersion);
-        if(mslVersion == - 1) {
+        if (mslVersion == - 1) {
             SDL_SetError("failed to parse MSL version string \"%s\"", _mslVersion);
             spvc_context_destroy(context);
             return NULL;
