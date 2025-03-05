@@ -49,7 +49,7 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-I | --include <value>", "HLSL include directory. Only used with HLSL source.");
     SDL_Log("  %-*s %s", column_width, "-D<name>[=<value>]", "HLSL define. Only used with HLSL source. Can be repeated.");
     SDL_Log("  %-*s %s", column_width, "", "If =<value> is omitted the define will be treated as equal to 1.");
-    SDL_Log("  %-*s %s", column_width, "--msl-version <value>", "Target MSL version. Only used when transpiling to MSL.");
+    SDL_Log("  %-*s %s", column_width, "--msl-version <value>", "Target MSL version. Only used when transpiling to MSL. The default is 1.2.0.");
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
 }
 
@@ -80,6 +80,14 @@ void write_compute_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_ComputeP
         info->threadcount_y,
         info->threadcount_z
     );
+}
+
+int parse_version_number(const char* str)
+{
+    unsigned major, minor, patch;
+    if(SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3)
+        return (major * 10000) + (minor) * 100 + patch;
+    return -1;
 }
 
 int main(int argc, char *argv[])
@@ -233,7 +241,12 @@ int main(int argc, char *argv[])
                     return 1;
                 }
                 i += 1;
-                mslVersion = SDL_atoi(argv[i]);
+                mslVersion = parse_version_number(argv[i]);
+                if(mslVersion == - 1) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to parse MSL version string \"%s\"", argv[i]);
+                    print_help();
+                    return 1;
+                }
             } else if (SDL_strcmp(argv[i], "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
                 enableDebug = true;
             } else if (SDL_strcmp(arg, "--") == 0) {
