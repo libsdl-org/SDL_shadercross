@@ -119,6 +119,14 @@ struct IDxcBlob
     IDxcBlobVtbl *lpVtbl;
 };
 
+static int parse_version_number(const char* str)
+{
+    unsigned major, minor, patch;
+    if(SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3)
+        return (major * 10000) + (minor) * 100 + patch;
+    return -1;
+}
+
 static Uint8 IID_IDxcBlobUtf8[] = {
     0xC9, 0x36, 0xA6, 0x3D,
     0x71, 0xBA,
@@ -958,7 +966,13 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     }
 
     if(backend == SPVC_BACKEND_MSL) {
-        unsigned mslVersion = SDL_GetNumberProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, SPVC_MAKE_MSL_VERSION(1, 2, 0));
+        const char *_mslVersion = SDL_GetStringProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, "1.2.0");
+        int mslVersion = parse_version_number(_mslVersion);
+        if(mslVersion == - 1) {
+            SDL_SetError("failed to parse MSL version string \"%s\"", _mslVersion);
+            spvc_context_destroy(context);
+            return NULL;
+        }
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VERSION, mslVersion);
     }
 

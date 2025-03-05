@@ -82,14 +82,6 @@ void write_compute_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_ComputeP
     );
 }
 
-int parse_version_number(const char* str)
-{
-    unsigned major, minor, patch;
-    if(SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3)
-        return (major * 10000) + (minor) * 100 + patch;
-    return -1;
-}
-
 int main(int argc, char *argv[])
 {
     bool sourceValid = false;
@@ -112,7 +104,7 @@ int main(int argc, char *argv[])
     size_t numDefines = 0;
 
     bool enableDebug = false;
-    int mslVersion = 10200;  // 1.2.0 is the default
+    char *mslVersion = NULL;
 
     for (int i = 1; i < argc; i += 1) {
         char *arg = argv[i];
@@ -241,12 +233,7 @@ int main(int argc, char *argv[])
                     return 1;
                 }
                 i += 1;
-                mslVersion = parse_version_number(argv[i]);
-                if(mslVersion == - 1) {
-                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to parse MSL version string \"%s\"", argv[i]);
-                    print_help();
-                    return 1;
-                }
+                mslVersion = argv[i];
             } else if (SDL_strcmp(argv[i], "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
                 enableDebug = true;
             } else if (SDL_strcmp(arg, "--") == 0) {
@@ -358,7 +345,8 @@ int main(int argc, char *argv[])
         spirvInfo.enable_debug = enableDebug;
         spirvInfo.name = filename;
         spirvInfo.props = SDL_CreateProperties();
-        SDL_SetNumberProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
+        if(mslVersion)
+            SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
 
         switch (destinationFormat) {
             case SHADERFORMAT_DXBC: {
@@ -512,7 +500,8 @@ int main(int argc, char *argv[])
                     spirvInfo.shader_stage = shaderStage;
                     spirvInfo.enable_debug = enableDebug;
                     spirvInfo.props = SDL_CreateProperties();
-                    SDL_SetNumberProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
+                    if(mslVersion)
+                        SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
                     char *buffer = SDL_ShaderCross_TranspileMSLFromSPIRV(
                         &spirvInfo);
                     if (buffer == NULL) {
