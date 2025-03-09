@@ -119,15 +119,6 @@ struct IDxcBlob
     IDxcBlobVtbl *lpVtbl;
 };
 
-static int parse_version_number(const char* str)
-{
-    unsigned major, minor, patch;
-    if (SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3) {
-        return (major * 10000) + (minor) * 100 + patch;
-    }
-    return -1;
-}
-
 static Uint8 IID_IDxcBlobUtf8[] = {
     0xC9, 0x36, 0xA6, 0x3D,
     0x71, 0xBA,
@@ -882,6 +873,15 @@ SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromHLSL(
 
 #define SPVC_ERROR(func) \
     SDL_SetError(#func " failed: %s", spvc_context_get_last_error_string(context))
+
+static int parse_version_number(const char* str)
+{
+    unsigned major, minor, patch;
+    if (SDL_sscanf(str, "%u.%u.%u", &major, &minor, &patch) == 3) {
+        return (major * 10000) + (minor) * 100 + patch;
+    }
+    return -1;
+}
 
 typedef struct SPIRVTranspileContext {
     spvc_context context;
