@@ -16,9 +16,11 @@ project(SDL3_shadercross LANGUAGES C VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(CMakeDependentOption)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/GetGitRevisionDescription.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/PrivateSdlFunctions.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlcpu.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlplatform.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlmanpages.cmake")
 
 if(NOT TARGET SDL3::SDL3-static)
     find_package(SDL3 ${SDL_REQUIRED_VERSION})
@@ -43,7 +45,8 @@ cmake_dependent_option(SDLSHADERCROSS_CLI_STATIC "Link CLI with static libraries
 option(SDLSHADERCROSS_WERROR "Enable Werror" OFF)
 option(SDLSHADERCROSS_INSTALL "Enable installation" OFF)
 cmake_dependent_option(SDLSHADERCROSS_INSTALL_CPACK "Enable CPack installation" OFF "SDLSHADERCROSS_INSTALL" OFF)
-cmake_dependent_option(SDLSHADERCROSS_INSTALL_RUNTIME "Download, build and install runtime dependencies" OFF "SDLSHADERCROSS_INSTALL" OFF)
+cmake_dependent_option(SDLSHADERCROSS_INSTALL_MAN "Install man pages for SDL3_shadercross" OFF "SDLSHADERCROSS_INSTALL" OFF)
+cmake_dependent_option(SDLSHADERCROSS_INSTALL_RUNTIME "Download, build and install runtime dependencies" OFF "SDLSHADERCROSS_VENDORED;SDLSHADERCROSS_INSTALL" OFF)
 
 sdl_calculate_derived_version_variables(${MAJOR_VERSION} ${MINOR_VERSION} ${MICRO_VERSION})
 SDL_DetectTargetCPUArchitectures(SDL_CPU_NAMES)
@@ -364,6 +367,17 @@ if(SDLSHADERCROSS_INSTALL)
 		)
 	endif()
 
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+        set(INCLUDEDIR_FOR_PKG_CONFIG "${CMAKE_INSTALL_INCLUDEDIR}")
+    else()
+        set(INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+    endif()
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+        set(LIBDIR_FOR_PKG_CONFIG "${CMAKE_INSTALL_LIBDIR}")
+    else()
+        set(LIBDIR_FOR_PKG_CONFIG "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+
 	file(RELATIVE_PATH SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${CMAKE_INSTALL_PREFIX}/${SDLSHADERCROSS_PKGCONFIG_INSTALLDIR}" "${CMAKE_INSTALL_PREFIX}")
 	string(REGEX REPLACE "[/]+$" "" SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
 	set(SDL_PKGCONFIG_PREFIX "\${pcfiledir}/${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
@@ -398,6 +412,16 @@ if(SDLSHADERCROSS_INSTALL)
 		set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
 		include(CPack)
 	endif()
+endif()
+
+if(SDLSHADERCROSS_INSTALL_MAN)
+	sdl_get_git_revision_hash(SDLSHADERCROSS_REVISION)
+	SDL_generate_manpages(
+		HEADERS_DIR "${PROJECT_SOURCE_DIR}/include/SDL3_shadercross"
+		SYMBOL "SDL_ShaderCross_Init"
+		WIKIHEADERS_PL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-scripts/wikiheaders.pl"
+		REVISION "${SDLSHADERCROSS_REVISION}"
+	)
 endif()
 
 set(DXC_LINUX_X64_URL "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.8.2407/linux_dxc_2024_07_31.x86_64.tar.gz")
