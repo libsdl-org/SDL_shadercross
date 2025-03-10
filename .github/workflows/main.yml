@@ -105,6 +105,7 @@ jobs:
             -DSDLSHADERCROSS_INSTALL=ON \
             -DSDLSHADERCROSS_INSTALL_RUNTIME=ON \
             -DSDLSHADERCROSS_INSTALL_CPACK=ON \
+            -DSDLSHADERCROSS_INSTALL_MAN=ON \
             -DCMAKE_INSTALL_PREFIX="${PWD}/prefix" \
             ${{ matrix.platform.cmake-arguments }}
 
