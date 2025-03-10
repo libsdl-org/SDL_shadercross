@@ -4,7 +4,9 @@ set(DXC_WINDOWS_X86_X64_ARM64_URL "https://github.com/microsoft/DirectXShaderCom
 set(DXC_WINDOWS_X86_X64_ARM64_HASH "SHA256=70b1913a1bfce4a3e1a5311d16246f4ecdf3a3e613abec8aa529e57668426f85")
 
 get_filename_component(EXTERNAL_PATH "${CMAKE_CURRENT_LIST_DIR}/../external" ABSOLUTE)
-set(DXC_ROOT "${EXTERNAL_PATH}/DirectXShaderCompiler-binaries")
+if(NOT DEFINED DXC_ROOT)
+    set(DXC_ROOT "${EXTERNAL_PATH}/DirectXShaderCompiler-binaries")
+endif()
 
 set(DOWNLOAD_LINUX ON)
 set(DOWNLOAD_WINDOWS ON)
