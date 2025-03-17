@@ -1025,7 +1025,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             if (result < 0) {
                 SPVC_ERROR(spvc_resources_get_resource_list_for_type);
                 spvc_context_destroy(context);
-                return false;
+                return NULL;
             }
             num_texture_samplers = num_separate_samplers;
         }
@@ -1291,7 +1291,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
             if (result < 0) {
                 SPVC_ERROR(spvc_resources_get_resource_list_for_type);
                 spvc_context_destroy(context);
-                return false;
+                return NULL;
             }
             num_texture_samplers = num_separate_samplers;
         }
