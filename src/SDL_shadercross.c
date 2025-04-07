@@ -521,7 +521,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         return NULL;
     }
 
-    // If compilation succeeded, but there are errors, those are warnings
+    // Compilation succeeded, check to see if output messages are errors or warnings.
     dxcResult->lpVtbl->GetOutput(
         dxcResult,
         DXC_OUT_ERRORS,
@@ -530,8 +530,16 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         NULL);
 
     if (errors != NULL && errors->lpVtbl->GetBufferSize(errors) != 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "HLSL compiled with warnings: %s",
-            (char *)errors->lpVtbl->GetBufferPointer(errors));
+        char *message = (char *)errors->lpVtbl->GetBufferPointer(errors);
+        if (SDL_strstr(message, "error:")) {
+            SDL_SetError("HLSL compilation failed: %s", message);
+            dxcResult->lpVtbl->Release(dxcResult);
+            dxcInstance->lpVtbl->Release(dxcInstance);
+            utils->lpVtbl->Release(utils);
+            return NULL;
+        } else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "HLSL compiled with warnings: %s", message);
+        }
     }
 
     *size = blob->lpVtbl->GetBufferSize(blob);
