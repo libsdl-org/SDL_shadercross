@@ -176,7 +176,10 @@ if(SDLSHADERCROSS_SHARED)
 	add_library(SDL3_shadercross-shared SHARED ${SOURCE_FILES})
 	add_library(SDL3_shadercross::SDL3_shadercross ALIAS SDL3_shadercross-shared)
 
-	set_property(TARGET SDL3_shadercross-shared PROPERTY DEFINE_SYMBOL DLL_EXPORT)
+	set_target_properties(SDL3_shadercross-shared PROPERTIES
+		INSTALL_RPATH "\$ORIGIN"
+		DEFINE_SYMBOL DLL_EXPORT
+	)
 	sdl_target_link_option_version_file(SDL3_shadercross-shared "${CMAKE_CURRENT_SOURCE_DIR}/src/SDL_shadercross.sym")
 	sdl_target_link_options_no_undefined(SDL3_shadercross-shared)
 
@@ -242,6 +245,7 @@ foreach(target IN LISTS SDL3_shadercross_targets)
 		add_compile_definitions(SDL_SHADERCROSS_DXC)
 	endif()
 
+	set_property(TARGET ${target} PROPERTY LINKER_LANGUAGE CXX)
 	if(SDLSHADERCROSS_SPIRVCROSS_SHARED)
 		target_link_libraries(${target} PRIVATE spirv-cross-c-shared)
 	else()
@@ -249,10 +253,6 @@ foreach(target IN LISTS SDL3_shadercross_targets)
 	endif()
 	if(SDLSHADERCROSS_DXC)
 		target_link_libraries(${target} PRIVATE DirectXShaderCompiler::dxcompiler)
-	endif()
-	if(NOT SDLSHADERCROSS_SPIRVCROSS_SHARED)
-		# spirv-cross uses C++
-		set_property(TARGET ${target} PROPERTY LINKER_LANGUAGE CXX)
 	endif()
 endforeach()
 
@@ -282,6 +282,11 @@ if(SDLSHADERCROSS_CLI)
 endif()
 
 if(SDLSHADERCROSS_INSTALL)
+	if(APPLE)
+		set(rpath_origin_exe "@executable_path")
+	else()
+		set(rpath_origin_exe "\$ORIGIN")
+	endif()
 	if(WIN32 AND NOT MINGW)
 		set(INSTALL_CMAKEDIR_ROOT_DEFAULT "cmake")
 	else()
@@ -340,6 +345,8 @@ if(SDLSHADERCROSS_INSTALL)
 	)
 	if(SDLSHADERCROSS_CLI)
 		install(TARGETS shadercross RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+		file(RELATIVE_PATH bin_to_lib "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBDIR}")
+		set_property(TARGET shadercross PROPERTY INSTALL_RPATH "${rpath_origin_exe}/${bin_to_lib}")
 	endif()
 
 	include(CMakePackageConfigHelpers)
@@ -431,11 +438,6 @@ set(DXC_WINDOWS_X86_X64_ARM64_HASH "SHA256=e2627f004f0f9424d8c71ea1314d04f38c5a5
 
 if(SDLSHADERCROSS_INSTALL_RUNTIME)
 	set(chmod_0755 OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-	if(APPLE)
-		set(rpath_origin "@executable_path")
-	else()
-		set(rpath_origin "\$ORIGIN")
-	endif()
 
 	if(NOT SDLSHADERCROSS_VENDORED)
 		if(SDLSHADERCROSS_DXC)
@@ -459,11 +461,6 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 				")
 			endif()
 		endif()
-	endif()
-
-	if(TARGET shadercross)
-		file(RELATIVE_PATH bin_to_lib "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBDIR}")
-		set_property(TARGET shadercross PROPERTY INSTALL_RPATH "${rpath_origin}/${bin_to_lib}")
 	endif()
 
 	# Install SDL3
