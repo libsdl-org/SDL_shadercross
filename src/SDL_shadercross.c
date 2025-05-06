@@ -497,7 +497,9 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
                                        IID_IDxcBlob,
                                        (void **)&blob,
                                        NULL);
-    if (ret < 0) {
+
+    HRESULT retStatus;
+    if (ret < 0 || dxcResult->lpVtbl->GetStatus(dxcResult, &retStatus) < 0 || retStatus < 0 ) {
         // Compilation failed, display errors
         dxcResult->lpVtbl->GetOutput(
             dxcResult,
