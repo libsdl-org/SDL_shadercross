@@ -62,14 +62,17 @@ jobs:
           echo "${PWD}/bin" >>$GITHUB_PATH
 
           # libxrandr-dev is needed by vulkan-loader
+          # libjson-perl is a (build-time) dependency of vkd3d 3.16+
           sudo apt-get update -y
-          sudo apt-get install -y patchelf libxrandr-dev
+          sudo apt-get install -y patchelf libxrandr-dev libjson-perl
       - name: Install macOS requirements
         if: ${{ runner.os == 'macOS' }}
         run: |
           # bison is needed by vkd3d
-          brew install bison
+          # perl-json is needed by vkd3d 1.16+
+          brew install bison cpanm
           echo "/opt/homebrew/opt/bison/bin" >>$GITHUB_PATH
+          cpanm install JSON
       - name: Download DirectXShaderCompiler binaries
         if: ${{ !matrix.platform.vendored && runner.os != 'macOS' }}
         run: |
