@@ -63,6 +63,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "byte4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_UBYTE:
             switch (vector_size) {
                 case 1: return "ubyte";
@@ -71,6 +72,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "ubyte4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_SHORT:
             switch (vector_size) {
                 case 1: return "short";
@@ -79,6 +81,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "short4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_USHORT:
             switch (vector_size) {
                 case 1: return "ushort";
@@ -87,6 +90,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "ushort4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_INT:
             switch (vector_size) {
                 case 1: return "int";
@@ -95,6 +99,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "int4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_UINT:
             switch (vector_size) {
                 case 1: return "uint";
@@ -103,6 +108,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "uint4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_LONG:
             switch (vector_size) {
                 case 1: return "long";
@@ -111,6 +117,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "long4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_ULONG:
             switch (vector_size) {
                 case 1: return "ulong";
@@ -119,6 +126,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "ulong4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_HALF:
             switch (vector_size) {
                 case 1: return "half";
@@ -127,6 +135,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "half4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT:
             switch (vector_size) {
                 case 1: return "float";
@@ -135,6 +144,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "float4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_DOUBLE:
             switch (vector_size) {
                 case 1: return "double";
@@ -143,6 +153,7 @@ const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 
                 case 4: return "double4";
                 default: break;
             }
+            break;
         case SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN:
         default: break;
     }
