@@ -38,6 +38,24 @@ extern "C" {
 #define SDL_SHADERCROSS_MINOR_VERSION 0
 #define SDL_SHADERCROSS_MICRO_VERSION 0
 
+#define SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO 16
+#define SDL_SHADERCROSS_MAX_IO_VAR_NAME 32
+
+typedef enum SDL_ShaderCross_IOVarType {
+    SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN,
+    SDL_SHADERCROSS_IOVAR_TYPE_BYTE,
+    SDL_SHADERCROSS_IOVAR_TYPE_UBYTE,
+    SDL_SHADERCROSS_IOVAR_TYPE_SHORT,
+    SDL_SHADERCROSS_IOVAR_TYPE_USHORT,
+    SDL_SHADERCROSS_IOVAR_TYPE_INT,
+    SDL_SHADERCROSS_IOVAR_TYPE_UINT,
+    SDL_SHADERCROSS_IOVAR_TYPE_LONG,
+    SDL_SHADERCROSS_IOVAR_TYPE_ULONG,
+    SDL_SHADERCROSS_IOVAR_TYPE_HALF,
+    SDL_SHADERCROSS_IOVAR_TYPE_FLOAT,
+    SDL_SHADERCROSS_IOVAR_TYPE_DOUBLE
+} SDL_ShaderCross_IOVarType;
+
 typedef enum SDL_ShaderCross_ShaderStage
 {
    SDL_SHADERCROSS_SHADERSTAGE_VERTEX,
@@ -45,14 +63,26 @@ typedef enum SDL_ShaderCross_ShaderStage
    SDL_SHADERCROSS_SHADERSTAGE_COMPUTE
 } SDL_ShaderCross_ShaderStage;
 
+typedef struct SDL_ShaderCross_IOVarMetadata {
+    char name[SDL_SHADERCROSS_MAX_IO_VAR_NAME];  /**< The UTF-8 name of the variable. */
+    Uint32 location;                             /**< The location of the variable. */
+    Uint32 offset;                               /**< The byte offset of the variable. */
+    SDL_ShaderCross_IOVarType vector_type;       /**< The vector type of the variable. */
+    Uint32 vector_size;                          /**< The number of components in the vector type of the variable. */
+} SDL_ShaderCross_IOVarMetadata;
+
 typedef struct SDL_ShaderCross_GraphicsShaderMetadata
 {
-    Uint32 num_samplers;          /**< The number of samplers defined in the shader. */
-    Uint32 num_storage_textures;  /**< The number of storage textures defined in the shader. */
-    Uint32 num_storage_buffers;   /**< The number of storage buffers defined in the shader. */
-    Uint32 num_uniform_buffers;   /**< The number of uniform buffers defined in the shader. */
+    Uint32 num_samplers;                                                            /**< The number of samplers defined in the shader. */
+    Uint32 num_storage_textures;                                                    /**< The number of storage textures defined in the shader. */
+    Uint32 num_storage_buffers;                                                     /**< The number of storage buffers defined in the shader. */
+    Uint32 num_uniform_buffers;                                                     /**< The number of uniform buffers defined in the shader. */
+    Uint32 num_inputs;                                                              /**< The number of inputs defined in the shader. */
+    SDL_ShaderCross_IOVarMetadata inputs[SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO];   /**< The inputs defined in the shader. */
+    Uint32 num_outputs;                                                             /**< The number of outputs defined in the shader. */
+    SDL_ShaderCross_IOVarMetadata outputs[SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO];  /**< The outputs defined in the shader. */
 
-    SDL_PropertiesID props;       /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
+    SDL_PropertiesID props;                 /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
 } SDL_ShaderCross_GraphicsShaderMetadata;
 
 typedef struct SDL_ShaderCross_ComputePipelineMetadata
