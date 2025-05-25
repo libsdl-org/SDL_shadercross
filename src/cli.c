@@ -159,6 +159,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
         default: break;
     }
 
+    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unknown IO variable type: vector_type=%u vector_size=%u", io_var_type, vector_size);
     return "unknown";
 }
 
