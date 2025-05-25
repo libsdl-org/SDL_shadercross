@@ -1709,7 +1709,19 @@ void SDL_ShaderCross_GetIOVars(
 
         Uint32 vector_size = spvc_type_get_vector_size(type);
         var->vector_size = vector_size;
-        size_t name_length = SDL_min(SDL_utf8strlen(resource->name) + 1, SDL_SHADERCROSS_MAX_IO_VAR_NAME);
+
+        size_t name_length = SDL_strlen(resource->name) + 1;
+        if (name_length > SDL_SHADERCROSS_MAX_IO_VAR_NAME) {
+            SDL_LogWarn(
+                SDL_LOG_CATEGORY_APPLICATION,
+                "Variable name length too long: variable=%s length=%u maxlength=%u (name will be truncated)",
+                resource->name,
+                name_length,
+                SDL_SHADERCROSS_MAX_IO_VAR_NAME - 1
+            );
+
+            name_length = SDL_SHADERCROSS_MAX_IO_VAR_NAME;
+        }
         var->name[name_length - 1] = '\0';
         SDL_utf8strlcpy(var->name, resource->name, name_length);
         var->location = spvc_compiler_get_decoration(compiler, resource->id, SpvDecorationLocation);
