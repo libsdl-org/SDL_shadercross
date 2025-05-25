@@ -82,7 +82,7 @@ typedef struct SDL_ShaderCross_GraphicsShaderMetadata
     Uint32 num_outputs;                                                             /**< The number of outputs defined in the shader. */
     SDL_ShaderCross_IOVarMetadata outputs[SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO];  /**< The outputs defined in the shader. */
 
-    SDL_PropertiesID props;                 /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
+    SDL_PropertiesID props;                                                         /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
 } SDL_ShaderCross_GraphicsShaderMetadata;
 
 typedef struct SDL_ShaderCross_ComputePipelineMetadata
