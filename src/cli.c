@@ -53,7 +53,8 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
 }
 
-const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 vector_size) {
+static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 vector_size)
+{
     switch (io_var_type) {
         case SDL_SHADERCROSS_IOVAR_TYPE_BYTE:
             switch (vector_size) {
