@@ -1722,7 +1722,6 @@ void SDL_ShaderCross_GetIOVars(
 
             name_length = SDL_SHADERCROSS_MAX_IO_VAR_NAME;
         }
-        var->name[name_length - 1] = '\0';
         SDL_utf8strlcpy(var->name, resource->name, name_length);
         var->location = spvc_compiler_get_decoration(compiler, resource->id, SpvDecorationLocation);
         var->offset = offset;
