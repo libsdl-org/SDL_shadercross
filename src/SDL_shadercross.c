@@ -1871,7 +1871,16 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
         return false;
     }
 
-    num_inputs = SDL_min(num_inputs, SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO);
+    if (num_inputs > SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO) {
+        SDL_LogWarn(
+            SDL_LOG_CATEGORY_APPLICATION,
+            "Too many inputs: inputs=%u max inputs=%u (inputs will be truncated)",
+            num_inputs,
+            SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO
+        );
+
+        num_inputs = SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO;
+    }
     SDL_ShaderCross_GetIOVars(compiler, reflected_resources, num_inputs, metadata->inputs);
 
     // Outputs
@@ -1886,7 +1895,16 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
         return false;
     }
 
-    num_outputs = SDL_min(num_outputs, SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO);
+    if (num_outputs > SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO) {
+        SDL_LogWarn(
+            SDL_LOG_CATEGORY_APPLICATION,
+            "Too many outputs: outputs=%u max outputs=%u (outputs will be truncated)",
+            num_outputs,
+            SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO
+        );
+
+        num_outputs = SDL_SHADERCROSS_MAX_SHADER_VARS_PER_IO;
+    }
     SDL_ShaderCross_GetIOVars(compiler, reflected_resources, num_outputs, metadata->outputs);
 
     spvc_context_destroy(context);
