@@ -548,25 +548,27 @@ int main(int argc, char *argv[])
 
             case SHADERFORMAT_JSON: {
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata info;
-                    info.props = 0;
+                    SDL_ShaderCross_ComputePipelineMetadata *info = NULL;
                     if (SDL_ShaderCross_ReflectComputeSPIRV(
                         fileData,
                         fileSize,
-                        &info)) {
-                        write_compute_reflect_json(outputIO, &info);
+                        &info,
+                        0)) {
+                        write_compute_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata info;
-                    info.props = 0;
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = NULL;
                     if (SDL_ShaderCross_ReflectGraphicsSPIRV(
                         fileData,
                         fileSize,
-                        &info)) {
-                        write_graphics_reflect_json(outputIO, &info);
+                        &info,
+                        0)) {
+                        write_graphics_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
@@ -714,31 +716,32 @@ int main(int argc, char *argv[])
                 }
 
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata info;
-                    info.props = 0;
+                    SDL_ShaderCross_ComputePipelineMetadata *info = NULL;
                     bool result = SDL_ShaderCross_ReflectComputeSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info);
+                        &info, 0);
                     SDL_free(spirv);
 
                     if (result) {
-                        write_compute_reflect_json(outputIO, &info);
+                        write_compute_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata info;
-                    info.props = 0;
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = NULL;
                     bool result = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info);
+                        &info,
+                        0);
                     SDL_free(spirv);
 
                     if (result) {
-                        write_graphics_reflect_json(outputIO, &info);
+                        write_graphics_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
