@@ -810,7 +810,7 @@ void *SDL_ShaderCross_CompileDXBCFromHLSL(
         size);
 }
 
-static bool SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
+static void * SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_HLSL_Info *info,
     void **metadata,
