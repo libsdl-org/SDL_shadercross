@@ -1971,7 +1971,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
         SDL_free(allocMemory);
         return false;
     }
-    SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_inputs, allocMetadata->inputs, allocMemory + offset_outputnames);
+    SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_outputs, allocMetadata->outputs, allocMemory + offset_outputnames);
     spvc_context_destroy(context);
 
     allocMetadata->num_samplers = num_texture_samplers;
