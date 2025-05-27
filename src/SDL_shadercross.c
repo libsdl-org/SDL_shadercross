@@ -1926,7 +1926,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
         spvc_context_destroy(context);
         return false;
     }
-    string_length_output = SDL_ShaderCross_INTERNAL_GetStringLength(reflected_resources, num_inputs);
+    string_length_output = SDL_ShaderCross_INTERNAL_GetStringLength(reflected_resources, num_outputs);
 
     size_t offset_inputs = SDL_upper_multiple_power2(sizeof(SDL_ShaderCross_GraphicsShaderMetadata), sizeof(size_t));
     size_t offset_outputs = offset_inputs + num_inputs * sizeof(SDL_ShaderCross_IOVarMetadata);
