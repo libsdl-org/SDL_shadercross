@@ -532,6 +532,7 @@ if(SDLSHADERCROSS_INSTALL_RUNTIME)
 		find_program(PATCHELF_BIN NAMES "patchelf" REQUIRED)
 		install(CODE "file(GLOB so_paths \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/*so*\")\n  foreach(so_path \${so_paths})\n    if(NOT IS_SYMLINK \${so_path})\n      message(STATUS \"Adding \\\"\$ORIGIN\\\" to RPATH of \${so_path}\")\n      execute_process(COMMAND ${PATCHELF_BIN} \"\${so_path}\" --add-rpath \"\$ORIGIN\")\n    endif()\n  endforeach()")
 	elseif(APPLE)
-		# FIXME: Apple probably needs to do something similar as Linux, but using otool
+		find_program(INT_BIN NAMES "install_name_tool" REQUIRED)
+		install(CODE "file(GLOB so_paths \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/*dylib*\")\n  foreach(so_path \${so_paths})\n    if(NOT IS_SYMLINK \${so_path})\n      message(STATUS \"Adding \\\"\@loader_path\\\" to RPATH of \${so_path}\")\n      execute_process(COMMAND ${INT_BIN} \"\${so_path}\" -add_rpath \"\@loader_path\")\n    endif()\n  endforeach()")
 	endif()
 endif()
