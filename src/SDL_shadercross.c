@@ -1680,7 +1680,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     return transpileContext;
 }
 
-size_t SDL_ShaderCross_INTERNAL_GetStringLength(
+size_t SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(
     spvc_reflected_resource* reflected_resources,
     size_t num_vars)
 {
@@ -1902,7 +1902,7 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         spvc_context_destroy(context);
         return NULL;
     }
-    string_length_input = SDL_ShaderCross_INTERNAL_GetStringLength(reflected_resources, num_inputs);
+    string_length_input = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(reflected_resources, num_inputs);
 
     // Outputs (stage 1: count number of outputs, and name lengths)
     result = spvc_resources_get_resource_list_for_type(
@@ -2294,7 +2294,8 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
                 metadataProps);
 
         if (shaderInfo == NULL) {
-
+            SDL_ShaderCross_INTERNAL_DestroyTranspileContext(transpileContext);
+            return NULL;
         }
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
