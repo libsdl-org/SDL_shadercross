@@ -548,12 +548,11 @@ int main(int argc, char *argv[])
 
             case SHADERFORMAT_JSON: {
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata *info = NULL;
-                    if (SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
                         fileData,
                         fileSize,
-                        &info,
-                        0)) {
+                        0);
+                    if (info) {
                         write_compute_reflect_json(outputIO, info);
                         SDL_free(info);
                     } else {
@@ -561,12 +560,11 @@ int main(int argc, char *argv[])
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata *info = NULL;
-                    if (SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         fileData,
                         fileSize,
-                        &info,
-                        0)) {
+                        0);
+                    if (info) {
                         write_graphics_reflect_json(outputIO, info);
                         SDL_free(info);
                     } else {
@@ -716,14 +714,13 @@ int main(int argc, char *argv[])
                 }
 
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata *info = NULL;
-                    bool result = SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info, 0);
+                        0);
                     SDL_free(spirv);
 
-                    if (result) {
+                    if (info) {
                         write_compute_reflect_json(outputIO, info);
                         SDL_free(info);
                     } else {
@@ -731,15 +728,13 @@ int main(int argc, char *argv[])
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata *info = NULL;
-                    bool result = SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info,
                         0);
                     SDL_free(spirv);
 
-                    if (result) {
+                    if (info) {
                         write_graphics_reflect_json(outputIO, info);
                         SDL_free(info);
                     } else {
