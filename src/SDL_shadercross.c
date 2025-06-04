@@ -1708,37 +1708,37 @@ void SDL_ShaderCross_INTERNAL_GetIOVars(
 
         switch (spvc_type_get_basetype(type)) {
         case SPVC_BASETYPE_INT8:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_BYTE;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT8;
             break;
         case SPVC_BASETYPE_UINT8:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UBYTE;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT8;
             break;
         case SPVC_BASETYPE_INT16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_SHORT;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT16;
             break;
         case SPVC_BASETYPE_UINT16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_USHORT;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT16;
             break;
         case SPVC_BASETYPE_INT32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT32;
             break;
         case SPVC_BASETYPE_UINT32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT32;
             break;
         case SPVC_BASETYPE_INT64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_LONG;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT64;
             break;
         case SPVC_BASETYPE_UINT64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_ULONG;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT64;
             break;
         case SPVC_BASETYPE_FP16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_HALF;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16;
             break;
         case SPVC_BASETYPE_FP32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32;
             break;
         case SPVC_BASETYPE_FP64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_DOUBLE;
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64;
             break;
         default:
             var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN;

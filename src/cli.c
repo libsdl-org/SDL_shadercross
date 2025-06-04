@@ -56,7 +56,7 @@ void print_help(void)
 static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 vector_size)
 {
     switch (io_var_type) {
-        case SDL_SHADERCROSS_IOVAR_TYPE_BYTE:
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT8:
             switch (vector_size) {
                 case 1: return "byte";
                 case 2: return "byte2";
@@ -65,7 +65,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_UBYTE:
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT8:
             switch (vector_size) {
                 case 1: return "ubyte";
                 case 2: return "ubyte2";
@@ -74,7 +74,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_SHORT:
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT16:
             switch (vector_size) {
                 case 1: return "short";
                 case 2: return "short2";
@@ -83,7 +83,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_USHORT:
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT16:
             switch (vector_size) {
                 case 1: return "ushort";
                 case 2: return "ushort2";
@@ -92,7 +92,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_INT:
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT32:
             switch (vector_size) {
                 case 1: return "int";
                 case 2: return "int2";
@@ -101,7 +101,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_UINT:
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT32:
             switch (vector_size) {
                 case 1: return "uint";
                 case 2: return "uint2";
@@ -110,7 +110,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_LONG:
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT64:
             switch (vector_size) {
                 case 1: return "long";
                 case 2: return "long2";
@@ -119,7 +119,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_ULONG:
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT64:
             switch (vector_size) {
                 case 1: return "ulong";
                 case 2: return "ulong2";
@@ -128,7 +128,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_HALF:
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16:
             switch (vector_size) {
                 case 1: return "half";
                 case 2: return "half2";
@@ -137,7 +137,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT:
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32:
             switch (vector_size) {
                 case 1: return "float";
                 case 2: return "float2";
@@ -146,7 +146,7 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
                 default: break;
             }
             break;
-        case SDL_SHADERCROSS_IOVAR_TYPE_DOUBLE:
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64:
             switch (vector_size) {
                 case 1: return "double";
                 case 2: return "double2";
