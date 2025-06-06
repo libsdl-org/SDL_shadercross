@@ -590,6 +590,8 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+
+        SDL_DestroyProperties(spirvInfo.props);
     } else {
         SDL_ShaderCross_HLSL_Info hlslInfo;
         hlslInfo.source = fileData;
@@ -659,6 +661,7 @@ int main(int argc, char *argv[])
                         SDL_free(spirv);
                         SDL_free(buffer);
                     }
+                    SDL_DestroyProperties(spirvInfo.props);
                 }
                 break;
             }
@@ -712,6 +715,7 @@ int main(int argc, char *argv[])
                 SDL_IOprintf(outputIO, "%s", buffer);
                 SDL_free(spirv);
                 SDL_free(buffer);
+                SDL_DestroyProperties(spirvInfo.props);
                 break;
             }
 
