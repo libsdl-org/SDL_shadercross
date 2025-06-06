@@ -38,6 +38,21 @@ extern "C" {
 #define SDL_SHADERCROSS_MINOR_VERSION 0
 #define SDL_SHADERCROSS_MICRO_VERSION 0
 
+typedef enum SDL_ShaderCross_IOVarType {
+    SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN,
+    SDL_SHADERCROSS_IOVAR_TYPE_INT8,
+    SDL_SHADERCROSS_IOVAR_TYPE_UINT8,
+    SDL_SHADERCROSS_IOVAR_TYPE_INT16,
+    SDL_SHADERCROSS_IOVAR_TYPE_UINT16,
+    SDL_SHADERCROSS_IOVAR_TYPE_INT32,
+    SDL_SHADERCROSS_IOVAR_TYPE_UINT32,
+    SDL_SHADERCROSS_IOVAR_TYPE_INT64,
+    SDL_SHADERCROSS_IOVAR_TYPE_UINT64,
+    SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16,
+    SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32,
+    SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64
+} SDL_ShaderCross_IOVarType;
+
 typedef enum SDL_ShaderCross_ShaderStage
 {
    SDL_SHADERCROSS_SHADERSTAGE_VERTEX,
@@ -45,14 +60,24 @@ typedef enum SDL_ShaderCross_ShaderStage
    SDL_SHADERCROSS_SHADERSTAGE_COMPUTE
 } SDL_ShaderCross_ShaderStage;
 
+typedef struct SDL_ShaderCross_IOVarMetadata {
+    char *name;                             /**< The UTF-8 name of the variable. */
+    Uint32 location;                        /**< The location of the variable. */
+    Uint32 offset;                          /**< The byte offset of the variable. */
+    SDL_ShaderCross_IOVarType vector_type;  /**< The vector type of the variable. */
+    Uint32 vector_size;                     /**< The number of components in the vector type of the variable. */
+} SDL_ShaderCross_IOVarMetadata;
+
 typedef struct SDL_ShaderCross_GraphicsShaderMetadata
 {
-    Uint32 num_samplers;          /**< The number of samplers defined in the shader. */
-    Uint32 num_storage_textures;  /**< The number of storage textures defined in the shader. */
-    Uint32 num_storage_buffers;   /**< The number of storage buffers defined in the shader. */
-    Uint32 num_uniform_buffers;   /**< The number of uniform buffers defined in the shader. */
-
-    SDL_PropertiesID props;       /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
+    Uint32 num_samplers;                     /**< The number of samplers defined in the shader. */
+    Uint32 num_storage_textures;             /**< The number of storage textures defined in the shader. */
+    Uint32 num_storage_buffers;              /**< The number of storage buffers defined in the shader. */
+    Uint32 num_uniform_buffers;              /**< The number of uniform buffers defined in the shader. */
+    Uint32 num_inputs;                       /**< The number of inputs defined in the shader. */
+    SDL_ShaderCross_IOVarMetadata *inputs;   /**< The inputs defined in the shader. */
+    Uint32 num_outputs;                      /**< The number of outputs defined in the shader. */
+    SDL_ShaderCross_IOVarMetadata *outputs;  /**< The outputs defined in the shader. */
 } SDL_ShaderCross_GraphicsShaderMetadata;
 
 typedef struct SDL_ShaderCross_ComputePipelineMetadata
@@ -66,8 +91,6 @@ typedef struct SDL_ShaderCross_ComputePipelineMetadata
     Uint32 threadcount_x;                   /**< The number of threads in the X dimension. */
     Uint32 threadcount_y;                   /**< The number of threads in the Y dimension. */
     Uint32 threadcount_z;                   /**< The number of threads in the Z dimension. */
-
-    SDL_PropertiesID props;                 /**< A properties ID for extensions. This is allocated and freed by the caller, and should be 0 if no extensions are needed. */
 } SDL_ShaderCross_ComputePipelineMetadata;
 
 typedef struct SDL_ShaderCross_SPIRV_Info
@@ -109,6 +132,7 @@ typedef struct SDL_ShaderCross_HLSL_Info
  * Initializes SDL_shadercross
  *
  * \threadsafety This should only be called once, from a single thread.
+ * \returns true on success, false otherwise.
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_ShaderCross_Init(void);
 /**
@@ -122,6 +146,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_ShaderCross_Quit(void);
  * Get the supported shader formats that SPIRV cross-compilation can output
  *
  * \threadsafety It is safe to call this function from any thread.
+ * \returns GPU shader formats supported by SPIRV cross-compilation.
  */
 extern SDL_DECLSPEC SDL_GPUShaderFormat SDLCALL SDL_ShaderCross_GetSPIRVShaderFormats(void);
 
@@ -174,65 +199,73 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
     size_t *size);
 
 /**
- * Compile an SDL GPU shader from SPIRV code.
+ * Compile an SDL GPU shader from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL().
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a pointer filled in with shader metadata.
- * \returns a compiled SDL_GPUShader
+ * \param metadata a struct describing shader metadata. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
+ * \param props a properties object filled in with extra shader metadata.
+ * \returns a compiled SDL_GPUShader.
  *
  * \threadsafety It is safe to call this function from any thread.
  */
 extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata);
+    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
+    SDL_PropertiesID props);
 
 /**
- * Compile an SDL GPU compute pipeline from SPIRV code.
+ * Compile an SDL GPU compute pipeline from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL().
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a pointer filled in with compute pipeline metadata.
- * \returns a compiled SDL_GPUComputePipeline
+ * \param metadata a struct describing shader metadata. Can be obtained from SDL_ShaderCross_ReflectComputeSPIRV().
+ * \param props a properties object filled in with extra shader metadata.
+ * \returns a compiled SDL_GPUComputePipeline.
  *
  * \threadsafety It is safe to call this function from any thread.
  */
 extern SDL_DECLSPEC SDL_GPUComputePipeline * SDLCALL SDL_ShaderCross_CompileComputePipelineFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata);
+    const SDL_ShaderCross_ComputePipelineMetadata *metadata,
+    SDL_PropertiesID props);
 
 /**
- * Reflect graphics shader info from SPIRV code.
+ * Reflect graphics shader info from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL(). This must be freed with SDL_free() when you are done with the metadata.
  *
  * \param bytecode the SPIRV bytecode.
  * \param bytecode_size the length of the SPIRV bytecode.
- * \param metadata a pointer filled in with shader metadata.
+ * \param props a properties object filled in with extra shader metadata, provided by the user.
+ * \returns A metadata struct on success, NULL otherwise. The struct must be free'd when it is no longer needed.
  *
  * \threadsafety It is safe to call this function from any thread.
  */
-extern SDL_DECLSPEC bool SDLCALL SDL_ShaderCross_ReflectGraphicsSPIRV(
+extern SDL_DECLSPEC SDL_ShaderCross_GraphicsShaderMetadata * SDLCALL SDL_ShaderCross_ReflectGraphicsSPIRV(
     const Uint8 *bytecode,
     size_t bytecode_size,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata);
+    SDL_PropertiesID props);
 
 /**
- * Reflect compute pipeline info from SPIRV code.
+ * Reflect compute pipeline info from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL(). This must be freed with SDL_free() when you are done with the metadata.
  *
  * \param bytecode the SPIRV bytecode.
  * \param bytecode_size the length of the SPIRV bytecode.
- * \param metadata a pointer filled in with compute pipeline metadata.
+ * \param props a properties object filled in with extra shader metadata, provided by the user.
+ * \returns A metadata struct on success, NULL otherwise.
  *
  * \threadsafety It is safe to call this function from any thread.
  */
-extern SDL_DECLSPEC bool SDLCALL SDL_ShaderCross_ReflectComputeSPIRV(
+extern SDL_DECLSPEC SDL_ShaderCross_ComputePipelineMetadata * SDLCALL SDL_ShaderCross_ReflectComputeSPIRV(
     const Uint8 *bytecode,
     size_t bytecode_size,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata);
+    SDL_PropertiesID props);
 
 /**
  * Get the supported shader formats that HLSL cross-compilation can output
+ *
+ * \returns GPU shader formats supported by HLSL cross-compilation.
  *
  * \threadsafety It is safe to call this function from any thread.
  */
@@ -282,36 +315,6 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromHLSL(
 extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileSPIRVFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size);
-
-/**
- * Compile an SDL GPU shader from HLSL code.
- *
- * \param device the SDL GPU device.
- * \param info a struct describing the shader to transpile.
- * \param metadata a pointer filled in with shader metadata.
- * \returns a compiled SDL_GPUShader
- *
- * \threadsafety It is safe to call this function from any thread.
- */
-extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata);
-
-/**
- * Compile an SDL GPU compute pipeline from code.
- *
- * \param device the SDL GPU device.
- * \param info a struct describing the shader to transpile.
- * \param metadata a pointer filled in with compute pipeline metadata.
- * \returns a compiled SDL_GPUComputePipeline
- *
- * \threadsafety It is safe to call this function from any thread.
- */
-extern SDL_DECLSPEC SDL_GPUComputePipeline * SDLCALL SDL_ShaderCross_CompileComputePipelineFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata);
 
 #ifdef __cplusplus
 }

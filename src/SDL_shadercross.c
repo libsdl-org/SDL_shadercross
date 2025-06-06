@@ -27,6 +27,9 @@
 #define MAX_DEFINES 64
 #define MAX_DEFINE_STRING_LENGTH 256
 
+/* Upper round X to multiple of V. V must be power of 2. */
+#define SDL_upper_multiple_power2(X, V) (((X) + (V) - 1) & ~((V) - 1))
+
 /* Win32 Type Definitions */
 
 typedef int HRESULT;
@@ -805,70 +808,6 @@ void *SDL_ShaderCross_CompileDXBCFromHLSL(
         info,
         true,
         size);
-}
-
-static void *SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata)
-{
-    size_t bytecodeSize;
-
-    // We'll go through SPIRV-Cross for all of these to more easily obtain reflection metadata.
-    void *spirv = SDL_ShaderCross_CompileSPIRVFromHLSL(
-        info,
-        &bytecodeSize);
-
-    if (spirv == NULL) {
-        // Error output from DXC will have already been set
-        return NULL;
-    }
-
-    SDL_ShaderCross_SPIRV_Info spirvInfo;
-    spirvInfo.bytecode = spirv;
-    spirvInfo.bytecode_size = bytecodeSize;
-    spirvInfo.entrypoint = info->entrypoint;
-    spirvInfo.shader_stage = info->shader_stage;
-    spirvInfo.enable_debug = info->enable_debug;
-    spirvInfo.name = info->name;
-    spirvInfo.props = 0;
-
-    void *result;
-    if (info->shader_stage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-        result = SDL_ShaderCross_CompileComputePipelineFromSPIRV(
-            device,
-            &spirvInfo,
-            (void *)metadata);
-    } else {
-        result = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
-            device,
-            &spirvInfo,
-            (void *)metadata);
-    }
-    SDL_free(spirv);
-    return result;
-}
-
-SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata)
-{
-    return (SDL_GPUShader *)SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-        device,
-        info,
-        (void *)metadata);
-}
-
-SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata)
-{
-    return (SDL_GPUComputePipeline *)SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-        device,
-        info,
-        (void *)metadata);
 }
 
 #include <spirv_cross_c.h>
@@ -1656,12 +1595,90 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     return transpileContext;
 }
 
+size_t SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(
+    spvc_reflected_resource* reflected_resources,
+    size_t num_vars)
+{
+    size_t total_string_size = 0;
+    for (size_t i = 0; i < num_vars; i++) {
+        spvc_reflected_resource* resource = &reflected_resources[i];
+        total_string_size += SDL_strlen(resource->name) + 1;
+    }
+    return total_string_size;
+}
+
+void SDL_ShaderCross_INTERNAL_GetIOVars(
+    spvc_compiler compiler,
+    spvc_reflected_resource* reflected_resources,
+    size_t num_vars,
+    SDL_ShaderCross_IOVarMetadata* vars,
+    char *name_buffer
+) {
+    Uint32 offset = 0;
+    size_t name_buffer_offset = 0;
+    for (size_t i = 0; i < num_vars; i++) {
+        SDL_ShaderCross_IOVarMetadata* var = &vars[i];
+        spvc_reflected_resource* resource = &reflected_resources[i];
+        spvc_type type = spvc_compiler_get_type_handle(compiler, resource->base_type_id);
+
+        switch (spvc_type_get_basetype(type)) {
+        case SPVC_BASETYPE_INT8:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT8;
+            break;
+        case SPVC_BASETYPE_UINT8:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT8;
+            break;
+        case SPVC_BASETYPE_INT16:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT16;
+            break;
+        case SPVC_BASETYPE_UINT16:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT16;
+            break;
+        case SPVC_BASETYPE_INT32:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT32;
+            break;
+        case SPVC_BASETYPE_UINT32:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT32;
+            break;
+        case SPVC_BASETYPE_INT64:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT64;
+            break;
+        case SPVC_BASETYPE_UINT64:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT64;
+            break;
+        case SPVC_BASETYPE_FP16:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16;
+            break;
+        case SPVC_BASETYPE_FP32:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32;
+            break;
+        case SPVC_BASETYPE_FP64:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64;
+            break;
+        default:
+            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN;
+            break;
+        }
+
+        Uint32 vector_size = spvc_type_get_vector_size(type);
+        var->vector_size = vector_size;
+
+        var->name = name_buffer + name_buffer_offset;
+        size_t length_name = SDL_strlen(resource->name) + 1;
+        SDL_memcpy(var->name, resource->name, length_name);
+        name_buffer_offset += length_name;
+        var->location = spvc_compiler_get_decoration(compiler, resource->id, SpvDecorationLocation);
+        var->offset = offset;
+        offset += (spvc_type_get_bit_width(type) / 8) * vector_size;
+    }
+}
+
 // Acquire metadata from SPIRV bytecode.
 // TODO: validate descriptor sets
-bool SDL_ShaderCross_ReflectGraphicsSPIRV(
+SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     const Uint8 *code,
     size_t codeSize,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata // filled in with reflected data
+    SDL_PropertiesID metadataProps
 ) {
     spvc_result result;
     spvc_context context = NULL;
@@ -1671,14 +1688,19 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     size_t num_storage_textures = 0;
     size_t num_storage_buffers = 0;
     size_t num_uniform_buffers = 0;
+    size_t string_length_input;
+    size_t num_inputs = 0;
+    size_t string_length_output;
+    size_t num_outputs = 0;
     size_t num_separate_samplers = 0; // HLSL edge case
     size_t num_separate_images = 0; // HLSL edge case
+    (void) metadataProps;
 
     /* Create the SPIRV-Cross context */
     result = spvc_context_create(&context);
     if (result < 0) {
         SDL_SetError("spvc_context_create failed: %X", result);
-        return false;
+        return NULL;
     }
 
     /* Parse the SPIR-V into IR */
@@ -1686,7 +1708,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_context_parse_spirv);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     /* Create a reflection-only compiler */
@@ -1694,7 +1716,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_context_create_compiler);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     spvc_resources resources;
@@ -1704,7 +1726,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_compiler_create_shader_resources);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     // Combined texture-samplers
@@ -1716,7 +1738,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     // If source is HLSL, we might have separate images and samplers
@@ -1729,7 +1751,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
         if (result < 0) {
             SPVC_ERROR(spvc_resources_get_resource_list_for_type);
             spvc_context_destroy(context);
-            return false;
+            return NULL;
         }
         num_texture_samplers = num_separate_samplers;
     }
@@ -1743,7 +1765,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     // If source is HLSL, storage images might be marked as separate images
@@ -1755,7 +1777,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
     // The number of storage textures is the number of separate images minus the number of samplers.
     num_storage_textures += (num_separate_images - num_separate_samplers);
@@ -1769,7 +1791,7 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
     // Uniform buffers
@@ -1781,22 +1803,95 @@ bool SDL_ShaderCross_ReflectGraphicsSPIRV(
     if (result < 0) {
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
-        return false;
+        return NULL;
     }
 
+    // Inputs (stage 1: count number of inputs, and name lengths)
+    result = spvc_resources_get_resource_list_for_type(
+        resources,
+        SPVC_RESOURCE_TYPE_STAGE_INPUT,
+        (const spvc_reflected_resource **)&reflected_resources,
+        &num_inputs);
+    if (result < 0) {
+        SPVC_ERROR(spvc_resources_get_resource_list_for_type);
+        spvc_context_destroy(context);
+        return NULL;
+    }
+    string_length_input = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(reflected_resources, num_inputs);
+
+    // Outputs (stage 1: count number of outputs, and name lengths)
+    result = spvc_resources_get_resource_list_for_type(
+        resources,
+        SPVC_RESOURCE_TYPE_STAGE_OUTPUT,
+        (const spvc_reflected_resource **)&reflected_resources,
+        &num_outputs);
+    if (result < 0) {
+        SPVC_ERROR(spvc_resources_get_resource_list_for_type);
+        spvc_context_destroy(context);
+        return NULL;
+    }
+    string_length_output = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(reflected_resources, num_outputs);
+
+    size_t offset_inputs = SDL_upper_multiple_power2(sizeof(SDL_ShaderCross_GraphicsShaderMetadata), sizeof(size_t));
+    size_t offset_outputs = offset_inputs + num_inputs * sizeof(SDL_ShaderCross_IOVarMetadata);
+    size_t offset_inputnames = offset_outputs + num_outputs * sizeof(SDL_ShaderCross_IOVarMetadata);
+    size_t offset_outputnames = offset_inputnames + string_length_input;
+
+    char *allocMemory = SDL_malloc(offset_outputnames + string_length_output);
+    if (!allocMemory) {
+        spvc_context_destroy(context);
+        return NULL;
+    }
+
+    SDL_ShaderCross_GraphicsShaderMetadata *allocMetadata = (SDL_ShaderCross_GraphicsShaderMetadata *)allocMemory;
+    allocMetadata->inputs = (SDL_ShaderCross_IOVarMetadata *)(allocMemory + offset_inputs);
+    allocMetadata->outputs = (SDL_ShaderCross_IOVarMetadata *)(allocMemory + offset_outputs);
+
+    // Inputs (stage 2: fill in inputs)
+    size_t num_inputs_run2 = 0;
+    result = spvc_resources_get_resource_list_for_type(
+            resources,
+            SPVC_RESOURCE_TYPE_STAGE_INPUT,
+            (const spvc_reflected_resource **)&reflected_resources,
+            &num_inputs_run2);
+    if (result < 0 || num_inputs != num_inputs_run2) {
+        SPVC_ERROR(spvc_resources_get_resource_list_for_type);
+        spvc_context_destroy(context);
+        SDL_free(allocMemory);
+        return false;
+    }
+    SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_inputs, allocMetadata->inputs, allocMemory + offset_inputnames);
+
+    // Inputs (stage 2: fill in outputs)
+    size_t num_outputs_run2 = 0;
+    result = spvc_resources_get_resource_list_for_type(
+            resources,
+            SPVC_RESOURCE_TYPE_STAGE_OUTPUT,
+            (const spvc_reflected_resource **)&reflected_resources,
+            &num_outputs_run2);
+    if (result < 0 || num_outputs != num_outputs_run2) {
+        SPVC_ERROR(spvc_resources_get_resource_list_for_type);
+        spvc_context_destroy(context);
+        SDL_free(allocMemory);
+        return false;
+    }
+    SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_outputs, allocMetadata->outputs, allocMemory + offset_outputnames);
     spvc_context_destroy(context);
 
-    metadata->num_samplers = num_texture_samplers;
-    metadata->num_storage_textures = num_storage_textures;
-    metadata->num_storage_buffers = num_storage_buffers;
-    metadata->num_uniform_buffers = num_uniform_buffers;
-    return true;
+    allocMetadata->num_samplers = num_texture_samplers;
+    allocMetadata->num_storage_textures = num_storage_textures;
+    allocMetadata->num_storage_buffers = num_storage_buffers;
+    allocMetadata->num_uniform_buffers = num_uniform_buffers;
+    allocMetadata->num_inputs = num_inputs;
+    allocMetadata->num_outputs = num_outputs;
+
+    return allocMetadata;
 }
 
-bool SDL_ShaderCross_ReflectComputeSPIRV(
+SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
     const Uint8 *bytecode,
     size_t bytecodeSize,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata // filled in with reflected data
+    SDL_PropertiesID metadataProps
 ) {
     spvc_result result;
     spvc_context context = NULL;
@@ -1813,6 +1908,8 @@ bool SDL_ShaderCross_ReflectComputeSPIRV(
     size_t num_storage_buffers = 0;
     size_t num_separate_samplers = 0; // HLSL edge case
     size_t num_separate_images = 0; // HLSL edge case
+
+    (void) metadataProps;
 
     /* Create the SPIRV-Cross context */
     result = spvc_context_create(&context);
@@ -1992,6 +2089,10 @@ bool SDL_ShaderCross_ReflectComputeSPIRV(
     }
 
     // Threadcount
+    SDL_ShaderCross_ComputePipelineMetadata *metadata = SDL_malloc(sizeof(SDL_ShaderCross_ComputePipelineMetadata));
+    if (!metadata) {
+        return NULL;
+    }
     metadata->threadcount_x = spvc_compiler_get_execution_mode_argument_by_index(compiler, SpvExecutionModeLocalSize, 0);
     metadata->threadcount_y = spvc_compiler_get_execution_mode_argument_by_index(compiler, SpvExecutionModeLocalSize, 1);
     metadata->threadcount_z = spvc_compiler_get_execution_mode_argument_by_index(compiler, SpvExecutionModeLocalSize, 2);
@@ -2004,14 +2105,14 @@ bool SDL_ShaderCross_ReflectComputeSPIRV(
     metadata->num_readwrite_storage_textures = num_readwrite_storage_textures;
     metadata->num_readwrite_storage_buffers = num_readwrite_storage_buffers;
     metadata->num_uniform_buffers = num_uniform_buffers;
-    return true;
+    return metadata;
 }
 
 static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
     SDL_GPUShaderFormat targetFormat,
-    void *metadata
+    SDL_PropertiesID metadataProps
 ) {
     spvc_backend backend;
     unsigned shadermodel = 0;
@@ -2045,12 +2146,12 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
     void *shaderObject = NULL;
 
     if (info->shader_stage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-        SDL_GPUComputePipelineCreateInfo createInfo;
-        SDL_ShaderCross_ComputePipelineMetadata *pipelineInfo = (SDL_ShaderCross_ComputePipelineMetadata *)metadata;
-        SDL_ShaderCross_ReflectComputeSPIRV(
+        SDL_ShaderCross_ComputePipelineMetadata *pipelineInfo = SDL_ShaderCross_ReflectComputeSPIRV(
             info->bytecode,
             info->bytecode_size,
-            pipelineInfo);
+            metadataProps);
+        SDL_GPUComputePipelineCreateInfo createInfo;
+
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
         createInfo.num_samplers = pipelineInfo->num_samplers;
@@ -2098,13 +2199,19 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         if (createInfo.props != 0) {
             SDL_DestroyProperties(createInfo.props);
         }
+        SDL_free(pipelineInfo);
     } else {
         SDL_GPUShaderCreateInfo createInfo;
-        SDL_ShaderCross_GraphicsShaderMetadata *shaderInfo = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
-        SDL_ShaderCross_ReflectGraphicsSPIRV(
-            info->bytecode,
-            info->bytecode_size,
-            shaderInfo);
+        SDL_ShaderCross_GraphicsShaderMetadata *shaderInfo =
+            SDL_ShaderCross_ReflectGraphicsSPIRV(
+                info->bytecode,
+                info->bytecode_size,
+                metadataProps);
+
+        if (shaderInfo == NULL) {
+            SDL_ShaderCross_INTERNAL_DestroyTranspileContext(transpileContext);
+            return NULL;
+        }
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
         createInfo.stage = (SDL_GPUShaderStage)info->shader_stage;
@@ -2148,6 +2255,8 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         if (createInfo.props != 0) {
             SDL_DestroyProperties(createInfo.props);
         }
+
+        SDL_free(shaderInfo);
     }
 
     SDL_ShaderCross_INTERNAL_DestroyTranspileContext(transpileContext);
@@ -2283,7 +2392,8 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
 static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    void *metadata)
+    const void *metadata,
+    SDL_PropertiesID metadataProps)
 {
     SDL_GPUShaderFormat format;
 
@@ -2293,10 +2403,6 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         if (info->shader_stage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
             SDL_GPUComputePipelineCreateInfo createInfo;
             SDL_ShaderCross_ComputePipelineMetadata *pipelineMetadata = (SDL_ShaderCross_ComputePipelineMetadata *)metadata;
-            SDL_ShaderCross_ReflectComputeSPIRV(
-                info->bytecode,
-                info->bytecode_size,
-                pipelineMetadata);
             createInfo.code = info->bytecode;
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
@@ -2323,14 +2429,13 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
                 SDL_DestroyProperties(createInfo.props);
             }
 
+            SDL_free(pipelineMetadata);
+
             return result;
         } else {
             SDL_GPUShaderCreateInfo createInfo;
             SDL_ShaderCross_GraphicsShaderMetadata *shaderMetadata = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
-            SDL_ShaderCross_ReflectGraphicsSPIRV(
-                info->bytecode,
-                info->bytecode_size,
-                shaderMetadata);
+
             createInfo.code = info->bytecode;
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
@@ -2376,29 +2481,33 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
         format,
-        metadata);
+        metadataProps);
 }
 
 SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    SDL_ShaderCross_GraphicsShaderMetadata *metadata)
+    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
+    SDL_PropertiesID props)
 {
     return (SDL_GPUShader *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
-        metadata);
+        (void*) metadata,
+        props);
 }
 
 SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    SDL_ShaderCross_ComputePipelineMetadata *metadata)
+    const SDL_ShaderCross_ComputePipelineMetadata *metadata,
+    SDL_PropertiesID props)
 {
     return (SDL_GPUComputePipeline *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
-        metadata);
+        (void*) metadata,
+        props);
 }
 
 bool SDL_ShaderCross_Init(void)

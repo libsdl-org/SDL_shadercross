@@ -53,16 +53,152 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
 }
 
+static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 vector_size)
+{
+    switch (io_var_type) {
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT8:
+            switch (vector_size) {
+                case 1: return "byte";
+                case 2: return "byte2";
+                case 3: return "byte3";
+                case 4: return "byte4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT8:
+            switch (vector_size) {
+                case 1: return "ubyte";
+                case 2: return "ubyte2";
+                case 3: return "ubyte3";
+                case 4: return "ubyte4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT16:
+            switch (vector_size) {
+                case 1: return "short";
+                case 2: return "short2";
+                case 3: return "short3";
+                case 4: return "short4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT16:
+            switch (vector_size) {
+                case 1: return "ushort";
+                case 2: return "ushort2";
+                case 3: return "ushort3";
+                case 4: return "ushort4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT32:
+            switch (vector_size) {
+                case 1: return "int";
+                case 2: return "int2";
+                case 3: return "int3";
+                case 4: return "int4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT32:
+            switch (vector_size) {
+                case 1: return "uint";
+                case 2: return "uint2";
+                case 3: return "uint3";
+                case 4: return "uint4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_INT64:
+            switch (vector_size) {
+                case 1: return "long";
+                case 2: return "long2";
+                case 3: return "long3";
+                case 4: return "long4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_UINT64:
+            switch (vector_size) {
+                case 1: return "ulong";
+                case 2: return "ulong2";
+                case 3: return "ulong3";
+                case 4: return "ulong4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16:
+            switch (vector_size) {
+                case 1: return "half";
+                case 2: return "half2";
+                case 3: return "half3";
+                case 4: return "half4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32:
+            switch (vector_size) {
+                case 1: return "float";
+                case 2: return "float2";
+                case 3: return "float3";
+                case 4: return "float4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64:
+            switch (vector_size) {
+                case 1: return "double";
+                case 2: return "double2";
+                case 3: return "double3";
+                case 4: return "double4";
+                default: break;
+            }
+            break;
+        case SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN:
+        default: break;
+    }
+
+    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unknown IO variable type: vector_type=%u vector_size=%u", io_var_type, vector_size);
+    return "unknown";
+}
+
 void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_GraphicsShaderMetadata *info)
 {
     SDL_IOprintf(
         outputIO,
-        "{ \"samplers\": %u, \"storage_textures\": %u, \"storage_buffers\": %u, \"uniform_buffers\": %u }\n",
+        "{ \"samplers\": %u, \"storage_textures\": %u, \"storage_buffers\": %u, \"uniform_buffers\": %u, ",
         info->num_samplers,
         info->num_storage_textures,
         info->num_storage_buffers,
         info->num_uniform_buffers
     );
+
+    SDL_IOprintf(outputIO, "\"inputs\": [");
+    for (Uint32 i = 0; i < info->num_inputs; i++) {
+        const SDL_ShaderCross_IOVarMetadata* input = &info->inputs[i];
+        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u, \"offset\": %u }%s",
+            input->name,
+            io_var_type_to_string(input->vector_type, input->vector_size),
+            input->location,
+            input->offset,
+            i + 1 < info->num_inputs ? ", " : ""
+        );
+    }
+    SDL_IOprintf(outputIO, "], ");
+
+    SDL_IOprintf(outputIO, "\"outputs\": [");
+    for (Uint32 i = 0; i < info->num_outputs; i++) {
+        const SDL_ShaderCross_IOVarMetadata* output = &info->outputs[i];
+        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u, \"offset\": %u }%s",
+            output->name,
+            io_var_type_to_string(output->vector_type, output->vector_size),
+            output->location,
+            output->offset,
+            i + 1 < info->num_outputs ? ", " : ""
+        );
+    }
+    SDL_IOprintf(outputIO, "] }\n");
 }
 
 void write_compute_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_ComputePipelineMetadata *info)
@@ -412,25 +548,25 @@ int main(int argc, char *argv[])
 
             case SHADERFORMAT_JSON: {
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata info;
-                    info.props = 0;
-                    if (SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
                         fileData,
                         fileSize,
-                        &info)) {
-                        write_compute_reflect_json(outputIO, &info);
+                        0);
+                    if (info) {
+                        write_compute_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata info;
-                    info.props = 0;
-                    if (SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         fileData,
                         fileSize,
-                        &info)) {
-                        write_graphics_reflect_json(outputIO, &info);
+                        0);
+                    if (info) {
+                        write_graphics_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
@@ -578,31 +714,29 @@ int main(int argc, char *argv[])
                 }
 
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata info;
-                    info.props = 0;
-                    bool result = SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info);
+                        0);
                     SDL_free(spirv);
 
-                    if (result) {
-                        write_compute_reflect_json(outputIO, &info);
+                    if (info) {
+                        write_compute_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata info;
-                    info.props = 0;
-                    bool result = SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
                         spirv,
                         bytecodeSize,
-                        &info);
+                        0);
                     SDL_free(spirv);
 
-                    if (result) {
-                        write_graphics_reflect_json(outputIO, &info);
+                    if (info) {
+                        write_graphics_reflect_json(outputIO, info);
+                        SDL_free(info);
                     } else {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
