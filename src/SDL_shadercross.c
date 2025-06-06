@@ -564,6 +564,11 @@ void *SDL_ShaderCross_CompileDXILFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size)
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
 #if SDL_PLATFORM_GDK
     return SDL_ShaderCross_INTERNAL_CompileUsingDXC(info, false, size);
 #else
@@ -609,6 +614,11 @@ void *SDL_ShaderCross_CompileSPIRVFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size)
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
     return SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         info,
         true,
@@ -804,6 +814,11 @@ void *SDL_ShaderCross_CompileDXBCFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size) // filled in with number of bytes of returned buffer
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
     return SDL_ShaderCross_INTERNAL_CompileDXBCFromHLSL(
         info,
         true,
@@ -1696,6 +1711,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     size_t num_separate_images = 0; // HLSL edge case
     (void) metadataProps;
 
+    if (code == NULL) {
+        SDL_InvalidParamError("code");
+        return NULL;
+    }
+
     /* Create the SPIRV-Cross context */
     result = spvc_context_create(&context);
     if (result < 0) {
@@ -1910,6 +1930,11 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
     size_t num_separate_images = 0; // HLSL edge case
 
     (void) metadataProps;
+
+    if (bytecode == NULL) {
+        SDL_InvalidParamError("bytecode");
+        return NULL;
+    }
 
     /* Create the SPIRV-Cross context */
     result = spvc_context_create(&context);
@@ -2266,6 +2291,11 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
 void *SDL_ShaderCross_TranspileMSLFromSPIRV(
     const SDL_ShaderCross_SPIRV_Info *info)
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_MSL,
         0,
@@ -2291,6 +2321,11 @@ void *SDL_ShaderCross_TranspileMSLFromSPIRV(
 void *SDL_ShaderCross_TranspileHLSLFromSPIRV(
     const SDL_ShaderCross_SPIRV_Info *info)
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_HLSL,
         SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, false) ? 50 : 60,
@@ -2317,6 +2352,11 @@ void *SDL_ShaderCross_CompileDXBCFromSPIRV(
     const SDL_ShaderCross_SPIRV_Info *info,
     size_t *size)
 {
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_HLSL,
         51,
@@ -2357,6 +2397,11 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
     SDL_SetError("%s", "Shadercross was not compiled with DXC support, cannot compile to SPIR-V!");
     return NULL;
 #endif
+
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
 
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_HLSL,
@@ -2490,6 +2535,21 @@ SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
     SDL_PropertiesID props)
 {
+    if (device == NULL) {
+        SDL_InvalidParamError("device");
+        return NULL;
+    }
+
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
+    if (metadata == NULL) {
+        SDL_InvalidParamError("metadata");
+        return NULL;
+    }
+
     return (SDL_GPUShader *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
@@ -2503,6 +2563,21 @@ SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromSPIRV(
     const SDL_ShaderCross_ComputePipelineMetadata *metadata,
     SDL_PropertiesID props)
 {
+    if (device == NULL) {
+        SDL_InvalidParamError("device");
+        return NULL;
+    }
+
+    if (info == NULL) {
+        SDL_InvalidParamError("info");
+        return NULL;
+    }
+
+    if (metadata == NULL) {
+        SDL_InvalidParamError("metadata");
+        return NULL;
+    }
+
     return (SDL_GPUComputePipeline *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
