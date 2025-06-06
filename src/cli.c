@@ -51,6 +51,7 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "", "If =<value> is omitted the define will be treated as equal to 1.");
     SDL_Log("  %-*s %s", column_width, "--msl-version <value>", "Target MSL version. Only used when transpiling to MSL. The default is 1.2.0.");
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
+    SDL_Log("  %-*s %s", column_width, "-p | --pssl", "Generate PSSL-compatible shader. Destination format should be HLSL.");
 }
 
 static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, Uint32 vector_size)
@@ -242,6 +243,8 @@ int main(int argc, char *argv[])
     bool enableDebug = false;
     char *mslVersion = NULL;
 
+    bool psslCompat = false;
+
     for (int i = 1; i < argc; i += 1) {
         char *arg = argv[i];
 
@@ -372,6 +375,8 @@ int main(int argc, char *argv[])
                 mslVersion = argv[i];
             } else if (SDL_strcmp(argv[i], "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
                 enableDebug = true;
+            } else if (SDL_strcmp(arg, "-p") == 0 || SDL_strcmp(arg, "--pssl") == 0) {
+                psslCompat = true;
             } else if (SDL_strcmp(arg, "--") == 0) {
                 accept_optionals = false;
             } else {
@@ -483,6 +488,10 @@ int main(int argc, char *argv[])
         spirvInfo.props = SDL_CreateProperties();
         if (mslVersion) {
             SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
+        }
+
+        if (psslCompat) {
+            SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, true);
         }
 
         switch (destinationFormat) {
@@ -685,7 +694,11 @@ int main(int argc, char *argv[])
                 spirvInfo.entrypoint = entrypointName;
                 spirvInfo.shader_stage = shaderStage;
                 spirvInfo.enable_debug = enableDebug;
-                spirvInfo.props = 0;
+                spirvInfo.props = SDL_CreateProperties();
+
+                if (psslCompat) {
+                    SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, true);
+                }
 
                 char *buffer = SDL_ShaderCross_TranspileHLSLFromSPIRV(
                     &spirvInfo);
