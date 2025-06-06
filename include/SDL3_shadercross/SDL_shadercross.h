@@ -199,11 +199,11 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
     size_t *size);
 
 /**
- * Compile an SDL GPU shader from SPIRV code.
+ * Compile an SDL GPU shader from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL().
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a pointer filled in with shader metadata. This should be freed as a single SDL_free.
+ * \param metadata a struct describing shader metadata. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
  * \param props a properties object filled in with extra shader metadata.
  * \returns a compiled SDL_GPUShader.
  *
@@ -212,15 +212,15 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
 extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
+    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
     SDL_PropertiesID props);
 
 /**
- * Compile an SDL GPU compute pipeline from SPIRV code.
+ * Compile an SDL GPU compute pipeline from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL().
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a pointer that will be filled in with compute pipeline metadata.
- *                 This is a single allocation that should be freed with SDL_free() when it is no longer needed.
+ * \param metadata a struct describing shader metadata. Can be obtained from SDL_ShaderCross_ReflectComputeSPIRV().
  * \param props a properties object filled in with extra shader metadata.
  * \returns a compiled SDL_GPUComputePipeline.
  *
@@ -229,10 +229,11 @@ extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShade
 extern SDL_DECLSPEC SDL_GPUComputePipeline * SDLCALL SDL_ShaderCross_CompileComputePipelineFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
+    const SDL_ShaderCross_ComputePipelineMetadata *metadata,
     SDL_PropertiesID props);
 
 /**
- * Reflect graphics shader info from SPIRV code. This must be freed with SDL_free() when you are done with the metadata.
+ * Reflect graphics shader info from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL(). This must be freed with SDL_free() when you are done with the metadata.
  *
  * \param bytecode the SPIRV bytecode.
  * \param bytecode_size the length of the SPIRV bytecode.
@@ -247,7 +248,7 @@ extern SDL_DECLSPEC SDL_ShaderCross_GraphicsShaderMetadata * SDLCALL SDL_ShaderC
     SDL_PropertiesID props);
 
 /**
- * Reflect compute pipeline info from SPIRV code. This must be freed with SDL_free() when you are done with the metadata.
+ * Reflect compute pipeline info from SPIRV code. If your shader source is HLSL, you should obtain SPIR-V bytecode from SDL_ShaderCross_CompileSPIRVFromHLSL(). This must be freed with SDL_free() when you are done with the metadata.
  *
  * \param bytecode the SPIRV bytecode.
  * \param bytecode_size the length of the SPIRV bytecode.
@@ -314,36 +315,6 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromHLSL(
 extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileSPIRVFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size);
-
-/**
- * Compile an SDL GPU shader from HLSL code.
- *
- * \param device the SDL GPU device.
- * \param info a struct describing the shader to transpile.
- * \param props a properties object filled in with extra shader metadata, provided by the user.
- * \returns a compiled SDL_GPUShader.
- *
- * \threadsafety It is safe to call this function from any thread.
- */
-extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_PropertiesID props);
-
-/**
- * Compile an SDL GPU compute pipeline from code.
- *
- * \param device the SDL GPU device.
- * \param info a struct describing the shader to transpile.
- * \param props a properties object filled in with extra shader metadata, provided by the user.
- * \returns a compiled SDL_GPUComputePipeline.
- *
- * \threadsafety It is safe to call this function from any thread.
- */
-extern SDL_DECLSPEC SDL_GPUComputePipeline * SDLCALL SDL_ShaderCross_CompileComputePipelineFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_PropertiesID props);
 
 #ifdef __cplusplus
 }

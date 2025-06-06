@@ -810,91 +810,6 @@ void *SDL_ShaderCross_CompileDXBCFromHLSL(
         size);
 }
 
-static void * SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_PropertiesID props)
-{
-    size_t bytecodeSize;
-
-    // We'll go through SPIRV-Cross for all of these to more easily obtain reflection metadata.
-    void *spirv = SDL_ShaderCross_CompileSPIRVFromHLSL(
-        info,
-        &bytecodeSize);
-
-    if (spirv == NULL) {
-        // Error output from DXC will have already been set
-        return NULL;
-    }
-
-    SDL_ShaderCross_SPIRV_Info spirvInfo;
-    spirvInfo.bytecode = spirv;
-    spirvInfo.bytecode_size = bytecodeSize;
-    spirvInfo.entrypoint = info->entrypoint;
-    spirvInfo.shader_stage = info->shader_stage;
-    spirvInfo.enable_debug = info->enable_debug;
-    spirvInfo.name = info->name;
-    spirvInfo.props = 0;
-
-    void *result;
-    if (info->shader_stage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-        result = SDL_ShaderCross_CompileComputePipelineFromSPIRV(
-            device,
-            &spirvInfo,
-            props);
-    } else {
-        result = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
-            device,
-            &spirvInfo,
-            props);
-    }
-    SDL_free(spirv);
-    return result;
-}
-
-SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_PropertiesID props)
-{
-    if (!info) {
-        SDL_SetError("info");
-        return NULL;
-    }
-    switch (info->shader_stage) {
-    case SDL_SHADERCROSS_SHADERSTAGE_VERTEX:
-    case SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT:
-        return (SDL_GPUShader *) SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-            device,
-            info,
-            props);
-    default:
-        SDL_SetError("Invalid shader stage");
-        return NULL;
-    }
-}
-
-SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromHLSL(
-    SDL_GPUDevice *device,
-    const SDL_ShaderCross_HLSL_Info *info,
-    SDL_PropertiesID props)
-{
-    if (!info) {
-        SDL_SetError("info");
-        return NULL;
-    }
-    switch (info->shader_stage) {
-    case SDL_SHADERCROSS_SHADERSTAGE_COMPUTE:
-        return (SDL_GPUComputePipeline *)SDL_ShaderCross_INTERNAL_CreateShaderFromHLSL(
-            device,
-            info,
-            props);
-    default:
-        SDL_SetError("Invalid shader stage");
-        return NULL;
-    }
-}
-
 #include <spirv_cross_c.h>
 
 #define SPVC_ERROR(func) \
@@ -2477,6 +2392,7 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
 static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
+    const void *metadata,
     SDL_PropertiesID metadataProps)
 {
     SDL_GPUShaderFormat format;
@@ -2486,11 +2402,7 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
     if (shader_formats & SDL_GPU_SHADERFORMAT_SPIRV) {
         if (info->shader_stage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
             SDL_GPUComputePipelineCreateInfo createInfo;
-            SDL_ShaderCross_ComputePipelineMetadata *pipelineMetadata =
-                SDL_ShaderCross_ReflectComputeSPIRV(
-                    info->bytecode,
-                    info->bytecode_size,
-                    metadataProps);
+            SDL_ShaderCross_ComputePipelineMetadata *pipelineMetadata = (SDL_ShaderCross_ComputePipelineMetadata *)metadata;
             createInfo.code = info->bytecode;
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
@@ -2522,11 +2434,8 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             return result;
         } else {
             SDL_GPUShaderCreateInfo createInfo;
-            SDL_ShaderCross_GraphicsShaderMetadata *shaderMetadata =
-                SDL_ShaderCross_ReflectGraphicsSPIRV(
-                    info->bytecode,
-                    info->bytecode_size,
-                    metadataProps);
+            SDL_ShaderCross_GraphicsShaderMetadata *shaderMetadata = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
+
             createInfo.code = info->bytecode;
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
@@ -2548,8 +2457,6 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             if (createInfo.props != 0) {
                 SDL_DestroyProperties(createInfo.props);
             }
-
-            SDL_free(shaderMetadata);
 
             return result;
         }
@@ -2580,22 +2487,26 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
 SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
+    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
     SDL_PropertiesID props)
 {
     return (SDL_GPUShader *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
+        (void*) metadata,
         props);
 }
 
 SDL_GPUComputePipeline *SDL_ShaderCross_CompileComputePipelineFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
+    const SDL_ShaderCross_ComputePipelineMetadata *metadata,
     SDL_PropertiesID props)
 {
     return (SDL_GPUComputePipeline *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
+        (void*) metadata,
         props);
 }
 
