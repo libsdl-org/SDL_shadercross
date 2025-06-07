@@ -551,6 +551,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
     for (Uint32 i = 0; i < numDefineStrings; i += 1) {
         SDL_free(defineStringsUtf16[i]);
     }
+    SDL_free(defineStringsUtf16);
     SDL_free(args);
 
     return buffer;
@@ -603,10 +604,12 @@ void *SDL_ShaderCross_CompileDXILFromHLSL(
     SDL_memcpy(&translatedHlslInfo, info, sizeof(SDL_ShaderCross_HLSL_Info));
     translatedHlslInfo.source = translatedSource;
 
-    return SDL_ShaderCross_INTERNAL_CompileUsingDXC(
+    void *result = SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         &translatedHlslInfo,
         false,
         size);
+    SDL_free(translatedSource);
+    return result;
 #endif
 }
 

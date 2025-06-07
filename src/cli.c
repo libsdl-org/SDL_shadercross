@@ -22,6 +22,9 @@
 #include <SDL3_shadercross/SDL_shadercross.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_iostream.h>
+#ifdef LEAKCHECK
+#include <SDL3/SDL_test_memory.h>
+#endif
 
 // We can emit HLSL and JSON as a destination, so let's redefine the shader format enum.
 typedef enum ShaderCross_DestinationFormat {
@@ -244,6 +247,10 @@ int main(int argc, char *argv[])
     char *mslVersion = NULL;
 
     bool psslCompat = false;
+
+#ifdef LEAKCHECK
+    SDLTest_TrackAllocations();
+#endif
 
     for (int i = 1; i < argc; i += 1) {
         char *arg = argv[i];
@@ -778,5 +785,11 @@ int main(int argc, char *argv[])
     }
     SDL_free(defines);
     SDL_ShaderCross_Quit();
+    SDL_Quit();
+
+#ifdef LEAKCHECK
+    SDLTest_LogAllocations();
+#endif
+
     return result;
 }
