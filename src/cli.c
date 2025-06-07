@@ -785,6 +785,7 @@ int main(int argc, char *argv[])
     }
     SDL_free(defines);
     SDL_ShaderCross_Quit();
+    SDL_Quit();
 
 #ifdef LEAKCHECK
     SDLTest_LogAllocations();
