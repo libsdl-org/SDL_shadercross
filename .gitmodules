@@ -12,5 +12,5 @@
 	branch = main
 [submodule "DirectXShaderCompiler"]
 	path = external/DirectXShaderCompiler
-	url = https://github.com/microsoft/DirectXShaderCompiler.git
-	branch = main
+	url = https://github.com/libsdl-org/DirectXShaderCompiler.git
+	branch = 1.8.2502-SDL
