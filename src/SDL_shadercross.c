@@ -796,6 +796,7 @@ void *SDL_ShaderCross_INTERNAL_CompileDXBCFromHLSL(
         info->enable_debug);
 
     if (blob == NULL) {
+        SDL_free(transpiledSource);
         *size = 0;
         return NULL;
     }
