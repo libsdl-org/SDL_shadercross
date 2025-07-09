@@ -181,11 +181,10 @@ void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_Graphic
     SDL_IOprintf(outputIO, "\"inputs\": [");
     for (Uint32 i = 0; i < info->num_inputs; i++) {
         const SDL_ShaderCross_IOVarMetadata* input = &info->inputs[i];
-        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u, \"offset\": %u }%s",
+        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u }%s",
             input->name,
             io_var_type_to_string(input->vector_type, input->vector_size),
             input->location,
-            input->offset,
             i + 1 < info->num_inputs ? ", " : ""
         );
     }
@@ -194,11 +193,10 @@ void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_Graphic
     SDL_IOprintf(outputIO, "\"outputs\": [");
     for (Uint32 i = 0; i < info->num_outputs; i++) {
         const SDL_ShaderCross_IOVarMetadata* output = &info->outputs[i];
-        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u, \"offset\": %u }%s",
+        SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u }%s",
             output->name,
             io_var_type_to_string(output->vector_type, output->vector_size),
             output->location,
-            output->offset,
             i + 1 < info->num_outputs ? ", " : ""
         );
     }

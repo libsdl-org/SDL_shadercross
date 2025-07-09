@@ -63,7 +63,6 @@ typedef enum SDL_ShaderCross_ShaderStage
 typedef struct SDL_ShaderCross_IOVarMetadata {
     char *name;                             /**< The UTF-8 name of the variable. */
     Uint32 location;                        /**< The location of the variable. */
-    Uint32 offset;                          /**< The byte offset of the variable. */
     SDL_ShaderCross_IOVarType vector_type;  /**< The vector type of the variable. */
     Uint32 vector_size;                     /**< The number of components in the vector type of the variable. */
 } SDL_ShaderCross_IOVarMetadata;
