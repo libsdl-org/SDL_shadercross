@@ -1713,6 +1713,14 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     size_t num_outputs = 0;
     size_t num_separate_samplers = 0; // HLSL edge case
     size_t num_separate_images = 0; // HLSL edge case
+
+    // The client might have unused resources that get optimized out by the compiler.
+    // We output the resource count as the highest binding index + 1 to avoid bindings becoming out of order.
+    Sint32 highest_sampler_binding_index = -1;
+    Sint32 highest_storage_texture_binding_index = -1;
+    Sint32 highest_storage_buffer_binding_index = -1;
+    Sint32 highest_uniform_buffer_binding_index = -1;
+
     (void) metadataProps;
 
     if (code == NULL) {
@@ -1765,6 +1773,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         return NULL;
     }
 
+    for (size_t i = 0; i < num_texture_samplers; i += 1)
+    {
+        highest_sampler_binding_index = SDL_max(highest_sampler_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
+
     // If source is HLSL, we might have separate images and samplers
     if (num_texture_samplers == 0) {
         result = spvc_resources_get_resource_list_for_type(
@@ -1777,7 +1790,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
             spvc_context_destroy(context);
             return NULL;
         }
-        num_texture_samplers = num_separate_samplers;
+
+        for (size_t i = 0; i < num_separate_samplers; i += 1)
+        {
+            highest_sampler_binding_index = SDL_max(highest_sampler_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+        }
     }
 
     // Storage textures
@@ -1792,6 +1809,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         return NULL;
     }
 
+    for (size_t i = 0; i < num_storage_buffers; i += 1)
+    {
+        highest_storage_texture_binding_index = SDL_max(highest_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
+
     // If source is HLSL, storage images might be marked as separate images
     result = spvc_resources_get_resource_list_for_type(
         resources,
@@ -1803,8 +1825,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         spvc_context_destroy(context);
         return NULL;
     }
-    // The number of storage textures is the number of separate images minus the number of samplers.
-    num_storage_textures += (num_separate_images - num_separate_samplers);
+
+    for (size_t i = 0; i < num_storage_buffers; i += 1)
+    {
+        highest_storage_texture_binding_index = SDL_max(highest_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
 
     // Storage buffers
     result = spvc_resources_get_resource_list_for_type(
@@ -1818,6 +1843,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         return NULL;
     }
 
+    for (size_t i = 0; i < num_storage_buffers; i += 1)
+    {
+        highest_storage_buffer_binding_index = SDL_max(highest_storage_buffer_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
+
     // Uniform buffers
     result = spvc_resources_get_resource_list_for_type(
         resources,
@@ -1828,6 +1858,11 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         SPVC_ERROR(spvc_resources_get_resource_list_for_type);
         spvc_context_destroy(context);
         return NULL;
+    }
+
+    for (size_t i = 0; i < num_uniform_buffers; i += 1)
+    {
+        highest_uniform_buffer_binding_index = SDL_max(highest_uniform_buffer_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
     }
 
     // Inputs (stage 1: count number of inputs, and name lengths)
@@ -1902,10 +1937,10 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_outputs, allocMetadata->outputs, allocMemory + offset_outputnames);
     spvc_context_destroy(context);
 
-    allocMetadata->num_samplers = num_texture_samplers;
-    allocMetadata->num_storage_textures = num_storage_textures;
-    allocMetadata->num_storage_buffers = num_storage_buffers;
-    allocMetadata->num_uniform_buffers = num_uniform_buffers;
+    allocMetadata->num_samplers = highest_sampler_binding_index + 1;
+    allocMetadata->num_storage_textures = highest_storage_texture_binding_index + 1;
+    allocMetadata->num_storage_buffers = highest_storage_buffer_binding_index + 1;
+    allocMetadata->num_uniform_buffers = highest_uniform_buffer_binding_index + 1;
     allocMetadata->num_inputs = num_inputs;
     allocMetadata->num_outputs = num_outputs;
 
@@ -1922,16 +1957,20 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
     spvc_parsed_ir ir = NULL;
     spvc_compiler compiler = NULL;
     size_t num_texture_samplers = 0;
-    size_t num_readonly_storage_textures = 0;
-    size_t num_readonly_storage_buffers = 0;
-    size_t num_readwrite_storage_textures = 0;
-    size_t num_readwrite_storage_buffers = 0;
     size_t num_uniform_buffers = 0;
 
     size_t num_storage_textures = 0;
     size_t num_storage_buffers = 0;
     size_t num_separate_samplers = 0; // HLSL edge case
     size_t num_separate_images = 0; // HLSL edge case
+
+    // The client might have unused resources that get optimized out by the compiler.
+    // We output the resource count as the highest binding index + 1 to avoid bindings becoming out of order.
+    Sint32 highest_sampler_binding_index = -1;
+    Sint32 highest_readonly_storage_texture_binding_index = -1;
+    Sint32 highest_readwrite_storage_texture_binding_index = -1;
+    Sint32 highest_readonly_storage_buffer_binding_index = -1;
+    Sint32 highest_readwrite_storage_buffer_binding_index = -1;
 
     (void) metadataProps;
 
@@ -1985,6 +2024,11 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         return false;
     }
 
+    for (size_t i = 0; i < num_texture_samplers; i += 1)
+    {
+        highest_sampler_binding_index = SDL_max(highest_sampler_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
+
     // If source is HLSL, we might have separate images and samplers
     if (num_texture_samplers == 0) {
         result = spvc_resources_get_resource_list_for_type(
@@ -1997,7 +2041,11 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
             spvc_context_destroy(context);
             return false;
         }
-        num_texture_samplers = num_separate_samplers;
+
+        for (size_t i = 0; i < num_separate_samplers; i += 1)
+        {
+            highest_sampler_binding_index = SDL_max(highest_sampler_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+        }
     }
 
     // Storage textures
@@ -2022,14 +2070,16 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         unsigned int descriptor_set_index = spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationDescriptorSet);
 
         if (descriptor_set_index == 0) {
-            num_readonly_storage_textures += 1;
+            highest_readonly_storage_texture_binding_index = SDL_max(highest_readonly_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+
         } else if (descriptor_set_index == 1) {
-            num_readwrite_storage_textures += 1;
+            highest_readwrite_storage_texture_binding_index = SDL_max(highest_readwrite_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
         } else {
             SDL_SetError("%s", "Descriptor set index for compute storage texture must be 0 or 1!");
             spvc_context_destroy(context);
             return false;
         }
+
     }
 
     // If source is HLSL, readonly storage images might be marked as separate images
@@ -2044,9 +2094,6 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         return false;
     }
 
-    // The number of storage textures is the number of separate images minus the number of samplers.
-    num_storage_textures += (num_separate_images - num_separate_samplers);
-
     for (size_t i = num_separate_samplers; i < num_separate_images; i += 1) {
         if (!spvc_compiler_has_decoration(compiler, reflected_resources[i].id, SpvDecorationDescriptorSet) || !spvc_compiler_has_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding)) {
             SDL_SetError("%s", "Shader resources must have descriptor set and binding index!");
@@ -2057,14 +2104,15 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         unsigned int descriptor_set_index = spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationDescriptorSet);
 
         if (descriptor_set_index == 0) {
-            num_readonly_storage_textures += 1;
+            highest_readonly_storage_texture_binding_index = SDL_max(highest_readonly_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
         } else if (descriptor_set_index == 1) {
-            num_readwrite_storage_textures += 1;
+            highest_readwrite_storage_texture_binding_index = SDL_max(highest_readwrite_storage_texture_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
         } else {
             SDL_SetError("%s", "Descriptor set index for compute storage texture must be 0 or 1!");
             spvc_context_destroy(context);
             return false;
         }
+
     }
 
     // Storage buffers
@@ -2095,9 +2143,9 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         }
 
         if (descriptor_set_index == 0) {
-            num_readonly_storage_buffers += 1;
+            highest_readonly_storage_buffer_binding_index = SDL_max(highest_readonly_storage_buffer_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
         } else if (descriptor_set_index == 1) {
-            num_readwrite_storage_buffers += 1;
+            highest_readwrite_storage_buffer_binding_index = SDL_max(highest_readwrite_storage_buffer_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
         } else {
             SDL_SetError("%s", "Descriptor set index for compute storage buffer must be 0 or 1!");
             spvc_context_destroy(context);
@@ -2117,6 +2165,12 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
         return false;
     }
 
+    Sint32 highest_uniform_buffer_binding_index = -1;
+    for (size_t i = 0; i < num_uniform_buffers; i += 1)
+    {
+        highest_uniform_buffer_binding_index = SDL_max(highest_uniform_buffer_binding_index, (Sint32) spvc_compiler_get_decoration(compiler, reflected_resources[i].id, SpvDecorationBinding));
+    }
+
     // Threadcount
     SDL_ShaderCross_ComputePipelineMetadata *metadata = SDL_malloc(sizeof(SDL_ShaderCross_ComputePipelineMetadata));
     if (!metadata) {
@@ -2128,12 +2182,12 @@ SDL_ShaderCross_ComputePipelineMetadata * SDL_ShaderCross_ReflectComputeSPIRV(
 
     spvc_context_destroy(context);
 
-    metadata->num_samplers = num_texture_samplers;
-    metadata->num_readonly_storage_textures = num_readonly_storage_textures;
-    metadata->num_readonly_storage_buffers = num_readonly_storage_buffers;
-    metadata->num_readwrite_storage_textures = num_readwrite_storage_textures;
-    metadata->num_readwrite_storage_buffers = num_readwrite_storage_buffers;
-    metadata->num_uniform_buffers = num_uniform_buffers;
+    metadata->num_samplers = highest_sampler_binding_index + 1;
+    metadata->num_readonly_storage_textures = highest_readonly_storage_texture_binding_index + 1;
+    metadata->num_readonly_storage_buffers = highest_readonly_storage_buffer_binding_index + 1;
+    metadata->num_readwrite_storage_textures = highest_readwrite_storage_texture_binding_index + 1;
+    metadata->num_readwrite_storage_buffers = highest_readwrite_storage_buffer_binding_index + 1;
+    metadata->num_uniform_buffers = highest_uniform_buffer_binding_index + 1;
     return metadata;
 }
 
