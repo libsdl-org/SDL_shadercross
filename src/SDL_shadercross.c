@@ -2478,8 +2478,6 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
                 SDL_DestroyProperties(createInfo.props);
             }
 
-            SDL_free(pipelineMetadata);
-
             return result;
         } else {
             SDL_GPUShaderCreateInfo createInfo;
