@@ -443,6 +443,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
     if (spirv) {
         args[argCount++] = (LPCWSTR)L"-spirv";
         args[argCount++] = (LPCWSTR)L"-fspv-flatten-resource-arrays";
+        args[argCount++] = (LPCWSTR)L"-fspv-target-env=vulkan1.1";
     }
 
     if (info->enable_debug) {
