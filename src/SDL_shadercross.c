@@ -400,7 +400,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         defineStringsUtf16[i] = (wchar_t *)SDL_iconv_string("WCHAR_T", "UTF-8", defineString, MAX_DEFINE_STRING_LENGTH);
     }
 
-    LPCWSTR *args = SDL_malloc(sizeof(LPCWSTR) * (numDefineStrings + 11));
+    LPCWSTR *args = SDL_malloc(sizeof(LPCWSTR) * (numDefineStrings + 13));
     Uint32 argCount = 0;
 
     for (Uint32 i = 0; i < numDefineStrings; i += 1) {
@@ -443,6 +443,8 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
     if (spirv) {
         args[argCount++] = (LPCWSTR)L"-spirv";
         args[argCount++] = (LPCWSTR)L"-fspv-flatten-resource-arrays";
+        args[argCount++] = (LPCWSTR)L"-fspv-preserve-bindings";
+        args[argCount++] = (LPCWSTR)L"-fspv-preserve-interface";
     }
 
     if (info->enable_debug) {
