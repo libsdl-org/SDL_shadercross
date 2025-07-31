@@ -419,6 +419,9 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
             dxcInstance->lpVtbl->Release(dxcInstance);
             utils->lpVtbl->Release(utils);
             SDL_free(entryPointUtf16);
+            for (Uint32 i = 0; i < numDefineStrings; i += 1) {
+                SDL_free(defineStringsUtf16[i]);
+            }
             return NULL;
         }
         args[argCount++] = (LPCWSTR)L"-I";
@@ -477,7 +480,12 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         IID_IDxcResult,
         (void **)&dxcResult);
 
+    SDL_free(args);
     SDL_free(entryPointUtf16);
+    for (Uint32 i = 0; i < numDefineStrings; i += 1) {
+        SDL_free(defineStringsUtf16[i]);
+    }
+    SDL_free(defineStringsUtf16);
     if (includeDirUtf16 != NULL) {
         SDL_free(includeDirUtf16);
     }
@@ -549,12 +557,6 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
     dxcResult->lpVtbl->Release(dxcResult);
     dxcInstance->lpVtbl->Release(dxcInstance);
     utils->lpVtbl->Release(utils);
-
-    for (Uint32 i = 0; i < numDefineStrings; i += 1) {
-        SDL_free(defineStringsUtf16[i]);
-    }
-    SDL_free(defineStringsUtf16);
-    SDL_free(args);
 
     return buffer;
 #else
