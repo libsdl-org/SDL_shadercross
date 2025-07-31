@@ -99,6 +99,8 @@ jobs:
       - name: Configure (CMake)
         run: |
           cmake -S . -B build -GNinja \
+            -DSDLSHADERCROSS_TESTS=ON \
+            -DSDLSHADERCROSS_TESTS_TRACKMEM=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DSDLSHADERCROSS_SHARED=ON \
             -DSDLSHADERCROSS_STATIC=ON \
@@ -127,6 +129,12 @@ jobs:
         if: ${{ always() && steps.build.outcome == 'success' }}
         run: |
           cmake --build build/ --target package
+      - name: Tests (CTest)
+        id: test
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          cd build/test
+          ctest . -V -C Release
 
       - name: Verify CMake configuration files
         if: ${{ always() && steps.install.outcome == 'success' }}
