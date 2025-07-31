@@ -49,6 +49,9 @@ cmake_dependent_option(SDLSHADERCROSS_INSTALL_CPACK "Enable CPack installation" 
 cmake_dependent_option(SDLSHADERCROSS_INSTALL_MAN "Install man pages for SDL3_shadercross" OFF "SDLSHADERCROSS_INSTALL" OFF)
 cmake_dependent_option(SDLSHADERCROSS_INSTALL_RUNTIME "Download, build and install runtime dependencies" OFF "SDLSHADERCROSS_INSTALL" OFF)
 
+option(SDLSHADERCROSS_TESTS "Build unit tests?" OFF)
+cmake_dependent_option(SDLSHADERCROSS_TESTS_TRACKMEM "Enable memory tracking in tests" OFF SDLSHADERCROSS_TESTS OFF)
+
 sdl_calculate_derived_version_variables(${MAJOR_VERSION} ${MINOR_VERSION} ${MICRO_VERSION})
 SDL_DetectTargetCPUArchitectures(SDL_CPU_NAMES)
 SDL_DetectCMakePlatform()
@@ -427,6 +430,11 @@ if(SDLSHADERCROSS_INSTALL_MAN)
 		WIKIHEADERS_PL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-scripts/wikiheaders.pl"
 		REVISION "${SDLSHADERCROSS_REVISION}"
 	)
+endif()
+
+if(SDLSHADERCROSS_TESTS)
+	enable_testing()
+	add_subdirectory(test)
 endif()
 
 if(SDLSHADERCROSS_INSTALL_RUNTIME)
