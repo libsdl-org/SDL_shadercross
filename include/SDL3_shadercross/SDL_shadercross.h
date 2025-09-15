@@ -98,6 +98,7 @@ typedef struct SDL_ShaderCross_SPIRV_Info
     size_t bytecode_size;                      /**< The length of the SPIRV bytecode. */
     const char *entrypoint;                    /**< The entry point function name for the shader in UTF-8. */
     SDL_ShaderCross_ShaderStage shader_stage;  /**< The shader stage to transpile the shader with. */
+    bool cull_unused_bindings;                 /**< The compiler will remove unused resources from the shader. This may cause surprising binding behavior so be careful when enabling this! */
     bool enable_debug;                         /**< Allows debug info to be emitted when relevant. Can be useful for graphics debuggers like RenderDoc. */
     const char *name;                          /**< A UTF-8 name to associate with the shader. Optional, can be NULL. */
 
@@ -121,6 +122,7 @@ typedef struct SDL_ShaderCross_HLSL_Info
     const char *include_dir;                   /**< The include directory for shader code. Optional, can be NULL. */
     SDL_ShaderCross_HLSL_Define *defines;      /**< An array of defines. Optional, can be NULL. If not NULL, must be terminated with a fully NULL define struct. */
     SDL_ShaderCross_ShaderStage shader_stage;  /**< The shader stage to compile the shader with. */
+    bool cull_unused_bindings;                 /**< The compiler will remove unused resources from the shader. This may cause surprising binding behavior so be careful when enabling this! */
     bool enable_debug;                         /**< Allows debug info to be emitted when relevant. Can be useful for graphics debuggers like RenderDoc. */
     const char *name;                          /**< A UTF-8 name to associate with the shader. Optional, can be NULL. */
 

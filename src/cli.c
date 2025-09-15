@@ -53,6 +53,7 @@ void print_help(void)
     SDL_Log("  %-*s %s", column_width, "-D<name>[=<value>]", "HLSL define. Only used with HLSL source. Can be repeated.");
     SDL_Log("  %-*s %s", column_width, "", "If =<value> is omitted the define will be treated as equal to 1.");
     SDL_Log("  %-*s %s", column_width, "--msl-version <value>", "Target MSL version. Only used when transpiling to MSL. The default is 1.2.0.");
+    SDL_Log("  %-*s %s", column_width, "-c | --cull", "Allow the compiler to cull unused resource bindings. This may lead to surprising binding behavior so be careful when enabling this!");
     SDL_Log("  %-*s %s", column_width, "-g | --debug", "Generate debug information when possible. Shaders are valid only when graphics debuggers are attached.");
     SDL_Log("  %-*s %s", column_width, "-p | --pssl", "Generate PSSL-compatible shader. Destination format should be HLSL.");
 }
@@ -241,6 +242,7 @@ int main(int argc, char *argv[])
     SDL_ShaderCross_HLSL_Define *defines = NULL;
     size_t numDefines = 0;
 
+    bool cullUnusedBindings = false;
     bool enableDebug = false;
     char *mslVersion = NULL;
 
@@ -378,7 +380,9 @@ int main(int argc, char *argv[])
                 }
                 i += 1;
                 mslVersion = argv[i];
-            } else if (SDL_strcmp(argv[i], "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
+            } else if (SDL_strcmp(arg, "-c") == 0 || SDL_strcmp(arg, "--cull") == 0) {
+                cullUnusedBindings = true;
+            }  else if (SDL_strcmp(arg, "-g") == 0 || SDL_strcmp(arg, "--debug") == 0) {
                 enableDebug = true;
             } else if (SDL_strcmp(arg, "-p") == 0 || SDL_strcmp(arg, "--pssl") == 0) {
                 psslCompat = true;
@@ -488,6 +492,7 @@ int main(int argc, char *argv[])
         spirvInfo.bytecode_size = fileSize;
         spirvInfo.entrypoint = entrypointName;
         spirvInfo.shader_stage = shaderStage;
+        spirvInfo.cull_unused_bindings = cullUnusedBindings;
         spirvInfo.enable_debug = enableDebug;
         spirvInfo.name = filename;
         spirvInfo.props = SDL_CreateProperties();
@@ -604,6 +609,7 @@ int main(int argc, char *argv[])
         hlslInfo.include_dir = includeDir;
         hlslInfo.defines = defines;
         hlslInfo.shader_stage = shaderStage;
+        hlslInfo.cull_unused_bindings = cullUnusedBindings;
         hlslInfo.enable_debug = enableDebug;
         hlslInfo.name = filename;
         hlslInfo.props = 0;
@@ -651,6 +657,7 @@ int main(int argc, char *argv[])
                     spirvInfo.bytecode_size = bytecodeSize;
                     spirvInfo.entrypoint = entrypointName;
                     spirvInfo.shader_stage = shaderStage;
+                    spirvInfo.cull_unused_bindings = cullUnusedBindings;
                     spirvInfo.enable_debug = enableDebug;
                     spirvInfo.props = SDL_CreateProperties();
                     if (mslVersion) {
@@ -701,6 +708,7 @@ int main(int argc, char *argv[])
                 spirvInfo.bytecode_size = bytecodeSize;
                 spirvInfo.entrypoint = entrypointName;
                 spirvInfo.shader_stage = shaderStage;
+                spirvInfo.cull_unused_bindings = cullUnusedBindings;
                 spirvInfo.enable_debug = enableDebug;
                 spirvInfo.props = SDL_CreateProperties();
 

@@ -446,7 +446,12 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
     if (spirv) {
         args[argCount++] = (LPCWSTR)L"-spirv";
         args[argCount++] = (LPCWSTR)L"-fspv-flatten-resource-arrays";
-        args[argCount++] = (LPCWSTR)L"-fspv-preserve-bindings";
+
+        if (!info->cull_unused_bindings)
+        {
+            args[argCount++] = (LPCWSTR)L"-fspv-preserve-bindings";
+        }
+
         args[argCount++] = (LPCWSTR)L"-fspv-preserve-interface";
     }
 
@@ -2205,6 +2210,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         hlslInfo.entrypoint = transpileContext->cleansed_entrypoint;
         hlslInfo.include_dir = NULL;
         hlslInfo.defines = NULL;
+        hlslInfo.cull_unused_bindings = info->cull_unused_bindings;
         hlslInfo.enable_debug = info->enable_debug;
         hlslInfo.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_COMPUTE;
         hlslInfo.name = info->name;
@@ -2261,6 +2267,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         hlslInfo.entrypoint = transpileContext->cleansed_entrypoint;
         hlslInfo.include_dir = NULL;
         hlslInfo.defines = NULL;
+        hlslInfo.cull_unused_bindings = info->cull_unused_bindings;
         hlslInfo.enable_debug = info->enable_debug;
         hlslInfo.shader_stage = info->shader_stage;
         hlslInfo.name = info->name;
@@ -2381,6 +2388,7 @@ void *SDL_ShaderCross_CompileDXBCFromSPIRV(
     hlslInfo.include_dir = NULL;
     hlslInfo.defines = NULL;
     hlslInfo.shader_stage = info->shader_stage;
+    hlslInfo.cull_unused_bindings = info->cull_unused_bindings;
     hlslInfo.enable_debug = info->enable_debug;
     hlslInfo.name = info->name;
     hlslInfo.props = 0;
@@ -2427,6 +2435,7 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
     hlslInfo.include_dir = NULL;
     hlslInfo.defines = NULL;
     hlslInfo.shader_stage = info->shader_stage;
+    hlslInfo.cull_unused_bindings = info->cull_unused_bindings;
     hlslInfo.enable_debug = info->enable_debug;
     hlslInfo.name = info->name;
     hlslInfo.props = 0;
