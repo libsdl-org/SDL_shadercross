@@ -206,7 +206,7 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a struct describing resource info of the shader. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
+ * \param resource_info a struct describing resource info of the shader. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
  * \param props a properties object filled in with extra shader metadata.
  * \returns a compiled SDL_GPUShader.
  *
