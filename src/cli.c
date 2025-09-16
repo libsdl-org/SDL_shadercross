@@ -168,37 +168,37 @@ static const char* io_var_type_to_string(SDL_ShaderCross_IOVarType io_var_type, 
     return "unknown";
 }
 
-void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_GraphicsShaderMetadata *info)
+void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_GraphicsShaderResourceInfo *resourceInfo, SDL_ShaderCross_GraphicsShaderIOInfo *ioInfo)
 {
     SDL_IOprintf(
         outputIO,
         "{ \"samplers\": %u, \"storage_textures\": %u, \"storage_buffers\": %u, \"uniform_buffers\": %u, ",
-        info->num_samplers,
-        info->num_storage_textures,
-        info->num_storage_buffers,
-        info->num_uniform_buffers
+        resourceInfo->num_samplers,
+        resourceInfo->num_storage_textures,
+        resourceInfo->num_storage_buffers,
+        resourceInfo->num_uniform_buffers
     );
 
     SDL_IOprintf(outputIO, "\"inputs\": [");
-    for (Uint32 i = 0; i < info->num_inputs; i++) {
-        const SDL_ShaderCross_IOVarMetadata* input = &info->inputs[i];
+    for (Uint32 i = 0; i < ioInfo->num_inputs; i++) {
+        const SDL_ShaderCross_IOVarMetadata* input = &ioInfo->inputs[i];
         SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u }%s",
             input->name,
             io_var_type_to_string(input->vector_type, input->vector_size),
             input->location,
-            i + 1 < info->num_inputs ? ", " : ""
+            i + 1 < ioInfo->num_inputs ? ", " : ""
         );
     }
     SDL_IOprintf(outputIO, "], ");
 
     SDL_IOprintf(outputIO, "\"outputs\": [");
-    for (Uint32 i = 0; i < info->num_outputs; i++) {
-        const SDL_ShaderCross_IOVarMetadata* output = &info->outputs[i];
+    for (Uint32 i = 0; i < ioInfo->num_outputs; i++) {
+        const SDL_ShaderCross_IOVarMetadata* output = &ioInfo->outputs[i];
         SDL_IOprintf(outputIO, "{ \"name\": \"%s\", \"type\": \"%s\", \"location\": %u }%s",
             output->name,
             io_var_type_to_string(output->vector_type, output->vector_size),
             output->location,
-            i + 1 < info->num_outputs ? ", " : ""
+            i + 1 < ioInfo->num_outputs ? ", " : ""
         );
     }
     SDL_IOprintf(outputIO, "] }\n");
@@ -570,7 +570,7 @@ int main(int argc, char *argv[])
 
             case SHADERFORMAT_JSON: {
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectSPIRVCompute(
                         fileData,
                         fileSize,
                         0);
@@ -582,16 +582,28 @@ int main(int argc, char *argv[])
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderResourceInfo *resourceInfo = SDL_ShaderCross_ReflectSPIRVGraphicsResources(
                         fileData,
                         fileSize,
                         0);
-                    if (info) {
-                        write_graphics_reflect_json(outputIO, info);
-                        SDL_free(info);
-                    } else {
+                    if (!resourceInfo) {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
+                    }
+
+                    SDL_ShaderCross_GraphicsShaderIOInfo *ioInfo = SDL_ShaderCross_ReflectSPIRVGraphicsIO(
+                        fileData,
+                        fileSize,
+                        0);
+                    if (!ioInfo) {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
+                        result = 1;
+                    }
+
+                    if (resourceInfo && ioInfo) {
+                        write_graphics_reflect_json(outputIO, resourceInfo, ioInfo);
+                        SDL_free(resourceInfo);
+                        SDL_free(ioInfo);
                     }
                 }
                 break;
@@ -765,7 +777,7 @@ int main(int argc, char *argv[])
                 }
 
                 if (shaderStage == SDL_SHADERCROSS_SHADERSTAGE_COMPUTE) {
-                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectComputeSPIRV(
+                    SDL_ShaderCross_ComputePipelineMetadata *info = SDL_ShaderCross_ReflectSPIRVCompute(
                         spirv,
                         bytecodeSize,
                         0);
@@ -779,18 +791,29 @@ int main(int argc, char *argv[])
                         result = 1;
                     }
                 } else {
-                    SDL_ShaderCross_GraphicsShaderMetadata *info = SDL_ShaderCross_ReflectGraphicsSPIRV(
+                    SDL_ShaderCross_GraphicsShaderResourceInfo *resourceInfo = SDL_ShaderCross_ReflectSPIRVGraphicsResources(
                         spirv,
                         bytecodeSize,
                         0);
-                    SDL_free(spirv);
-
-                    if (info) {
-                        write_graphics_reflect_json(outputIO, info);
-                        SDL_free(info);
-                    } else {
+                    if (!resourceInfo) {
                         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
                         result = 1;
+                    }
+
+                    SDL_ShaderCross_GraphicsShaderIOInfo *ioInfo = SDL_ShaderCross_ReflectSPIRVGraphicsIO(
+                        spirv,
+                        bytecodeSize,
+                        0);
+                    if (!ioInfo) {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reflect SPIRV: %s", SDL_GetError());
+                        result = 1;
+                    }
+                    SDL_free(spirv);
+
+                    if (resourceInfo && ioInfo) {
+                        write_graphics_reflect_json(outputIO, resourceInfo, ioInfo);
+                        SDL_free(resourceInfo);
+                        SDL_free(ioInfo);
                     }
                 }
 
