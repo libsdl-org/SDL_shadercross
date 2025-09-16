@@ -173,10 +173,10 @@ void write_graphics_reflect_json(SDL_IOStream *outputIO, SDL_ShaderCross_Graphic
     SDL_IOprintf(
         outputIO,
         "{ \"samplers\": %u, \"storage_textures\": %u, \"storage_buffers\": %u, \"uniform_buffers\": %u, ",
-        info->num_samplers,
-        info->num_storage_textures,
-        info->num_storage_buffers,
-        info->num_uniform_buffers
+        info->resource_info.num_samplers,
+        info->resource_info.num_storage_textures,
+        info->resource_info.num_storage_buffers,
+        info->resource_info.num_uniform_buffers
     );
 
     SDL_IOprintf(outputIO, "\"inputs\": [");

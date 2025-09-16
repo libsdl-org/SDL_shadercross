@@ -1905,10 +1905,10 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     SDL_ShaderCross_INTERNAL_GetIOVars(compiler, reflected_resources, num_outputs, allocMetadata->outputs, allocMemory + offset_outputnames);
     spvc_context_destroy(context);
 
-    allocMetadata->num_samplers = num_texture_samplers;
-    allocMetadata->num_storage_textures = num_storage_textures;
-    allocMetadata->num_storage_buffers = num_storage_buffers;
-    allocMetadata->num_uniform_buffers = num_uniform_buffers;
+    allocMetadata->resource_info.num_samplers = num_texture_samplers;
+    allocMetadata->resource_info.num_storage_textures = num_storage_textures;
+    allocMetadata->resource_info.num_storage_buffers = num_storage_buffers;
+    allocMetadata->resource_info.num_uniform_buffers = num_uniform_buffers;
     allocMetadata->num_inputs = num_inputs;
     allocMetadata->num_outputs = num_outputs;
 
@@ -2247,10 +2247,10 @@ static void *SDL_ShaderCross_INTERNAL_CompileFromSPIRV(
         createInfo.entrypoint = transpileContext->cleansed_entrypoint;
         createInfo.format = targetFormat;
         createInfo.stage = (SDL_GPUShaderStage)info->shader_stage;
-        createInfo.num_samplers = shaderInfo->num_samplers;
-        createInfo.num_storage_textures = shaderInfo->num_storage_textures;
-        createInfo.num_storage_buffers = shaderInfo->num_storage_buffers;
-        createInfo.num_uniform_buffers = shaderInfo->num_uniform_buffers;
+        createInfo.num_samplers = shaderInfo->resource_info.num_samplers;
+        createInfo.num_storage_textures = shaderInfo->resource_info.num_storage_textures;
+        createInfo.num_storage_buffers = shaderInfo->resource_info.num_storage_buffers;
+        createInfo.num_uniform_buffers = shaderInfo->resource_info.num_uniform_buffers;
 
         createInfo.props = 0;
 
@@ -2482,17 +2482,17 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
             return result;
         } else {
             SDL_GPUShaderCreateInfo createInfo;
-            SDL_ShaderCross_GraphicsShaderMetadata *shaderMetadata = (SDL_ShaderCross_GraphicsShaderMetadata *)metadata;
+            SDL_ShaderCross_GraphicsShaderResourceInfo *resourceInfo = (SDL_ShaderCross_GraphicsShaderResourceInfo *)metadata;
 
             createInfo.code = info->bytecode;
             createInfo.code_size = info->bytecode_size;
             createInfo.entrypoint = info->entrypoint;
             createInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             createInfo.stage = (SDL_GPUShaderStage)info->shader_stage;
-            createInfo.num_samplers = shaderMetadata->num_samplers;
-            createInfo.num_storage_textures = shaderMetadata->num_storage_textures;
-            createInfo.num_storage_buffers = shaderMetadata->num_storage_buffers;
-            createInfo.num_uniform_buffers = shaderMetadata->num_uniform_buffers;
+            createInfo.num_samplers = resourceInfo->num_samplers;
+            createInfo.num_storage_textures = resourceInfo->num_storage_textures;
+            createInfo.num_storage_buffers = resourceInfo->num_storage_buffers;
+            createInfo.num_uniform_buffers = resourceInfo->num_uniform_buffers;
 
             createInfo.props = 0;
 
@@ -2537,7 +2537,7 @@ static void *SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
 SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
+    const SDL_ShaderCross_GraphicsShaderResourceInfo *resourceInfo,
     SDL_PropertiesID props)
 {
     if (device == NULL) {
@@ -2550,7 +2550,7 @@ SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
         return NULL;
     }
 
-    if (metadata == NULL) {
+    if (resourceInfo == NULL) {
         SDL_InvalidParamError("metadata");
         return NULL;
     }
@@ -2558,7 +2558,7 @@ SDL_GPUShader *SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     return (SDL_GPUShader *)SDL_ShaderCross_INTERNAL_CreateShaderFromSPIRV(
         device,
         info,
-        (void*) metadata,
+        (void*) resourceInfo,
         props);
 }
 

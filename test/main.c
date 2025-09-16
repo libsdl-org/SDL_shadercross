@@ -301,10 +301,10 @@ static int SDLCALL shadercross_ReflectSPIRV(void *args)
 
     shader_gfx_metadata = SDL_ShaderCross_ReflectGraphicsSPIRV(spirv_shader, spirv_shader_size, 0);
     SDLTest_AssertCheck(shader_gfx_metadata != NULL, "SDL_ShaderCross_ReflectGraphicsSPIRV returns non-NULL shader (%s)", SDL_GetError());
-    SDLTest_AssertCheck(shader_gfx_metadata->num_samplers == 0, "num_samplers is %d, should be 0", shader_gfx_metadata->num_samplers);
-    SDLTest_AssertCheck(shader_gfx_metadata->num_storage_textures == 0, "num_storage_textures is %d, should be 0", shader_gfx_metadata->num_storage_textures);
-    SDLTest_AssertCheck(shader_gfx_metadata->num_storage_buffers == 0, "num_storage_buffers is %d, should be 0", shader_gfx_metadata->num_storage_buffers);
-    SDLTest_AssertCheck(shader_gfx_metadata->num_uniform_buffers == 1, "num_uniform_buffers is %d, should be 1", shader_gfx_metadata->num_uniform_buffers);
+    SDLTest_AssertCheck(shader_gfx_metadata->resource_info.num_samplers == 0, "num_samplers is %d, should be 0", shader_gfx_metadata->resource_info.num_samplers);
+    SDLTest_AssertCheck(shader_gfx_metadata->resource_info.num_storage_textures == 0, "num_storage_textures is %d, should be 0", shader_gfx_metadata->resource_info.num_storage_textures);
+    SDLTest_AssertCheck(shader_gfx_metadata->resource_info.num_storage_buffers == 0, "num_storage_buffers is %d, should be 0", shader_gfx_metadata->resource_info.num_storage_buffers);
+    SDLTest_AssertCheck(shader_gfx_metadata->resource_info.num_uniform_buffers == 1, "num_uniform_buffers is %d, should be 1", shader_gfx_metadata->resource_info.num_uniform_buffers);
     SDLTest_AssertCheck(shader_gfx_metadata->num_inputs == 1, "num_inputs is %d, should be 1", shader_gfx_metadata->num_inputs);
     SDLTest_AssertCheck(shader_gfx_metadata->num_outputs == 1, "num_outputs is %d, should be 1", shader_gfx_metadata->num_outputs);
 

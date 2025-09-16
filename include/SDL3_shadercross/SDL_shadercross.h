@@ -67,12 +67,17 @@ typedef struct SDL_ShaderCross_IOVarMetadata {
     Uint32 vector_size;                     /**< The number of components in the vector type of the variable. */
 } SDL_ShaderCross_IOVarMetadata;
 
-typedef struct SDL_ShaderCross_GraphicsShaderMetadata
+typedef struct SDL_ShaderCross_GraphicsShaderResourceInfo
 {
     Uint32 num_samplers;                     /**< The number of samplers defined in the shader. */
     Uint32 num_storage_textures;             /**< The number of storage textures defined in the shader. */
     Uint32 num_storage_buffers;              /**< The number of storage buffers defined in the shader. */
     Uint32 num_uniform_buffers;              /**< The number of uniform buffers defined in the shader. */
+} SDL_ShaderCross_GraphicsShaderResourceInfo;
+
+typedef struct SDL_ShaderCross_GraphicsShaderMetadata
+{
+    SDL_ShaderCross_GraphicsShaderResourceInfo resource_info; /**< Sub-struct containing the resource info of the shader. */
     Uint32 num_inputs;                       /**< The number of inputs defined in the shader. */
     SDL_ShaderCross_IOVarMetadata *inputs;   /**< The inputs defined in the shader. */
     Uint32 num_outputs;                      /**< The number of outputs defined in the shader. */
@@ -201,7 +206,7 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
  *
  * \param device the SDL GPU device.
  * \param info a struct describing the shader to transpile.
- * \param metadata a struct describing shader metadata. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
+ * \param metadata a struct describing resource info of the shader. Can be obtained from SDL_ShaderCross_ReflectGraphicsSPIRV().
  * \param props a properties object filled in with extra shader metadata.
  * \returns a compiled SDL_GPUShader.
  *
@@ -210,7 +215,7 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromSPIRV(
 extern SDL_DECLSPEC SDL_GPUShader * SDLCALL SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
     SDL_GPUDevice *device,
     const SDL_ShaderCross_SPIRV_Info *info,
-    const SDL_ShaderCross_GraphicsShaderMetadata *metadata,
+    const SDL_ShaderCross_GraphicsShaderResourceInfo *resource_info,
     SDL_PropertiesID props);
 
 /**
