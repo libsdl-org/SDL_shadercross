@@ -492,14 +492,17 @@ int main(int argc, char *argv[])
         spirvInfo.bytecode_size = fileSize;
         spirvInfo.entrypoint = entrypointName;
         spirvInfo.shader_stage = shaderStage;
-        spirvInfo.cull_unused_bindings = cullUnusedBindings;
-        spirvInfo.enable_debug = enableDebug;
-        spirvInfo.name = filename;
         spirvInfo.props = SDL_CreateProperties();
+        if (enableDebug) {
+            SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+            SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, filename);
+        }
+        if (cullUnusedBindings) {
+            SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL, true);
+        }
         if (mslVersion) {
             SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
         }
-
         if (psslCompat) {
             SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, true);
         }
@@ -609,10 +612,16 @@ int main(int argc, char *argv[])
         hlslInfo.include_dir = includeDir;
         hlslInfo.defines = defines;
         hlslInfo.shader_stage = shaderStage;
-        hlslInfo.cull_unused_bindings = cullUnusedBindings;
-        hlslInfo.enable_debug = enableDebug;
-        hlslInfo.name = filename;
-        hlslInfo.props = 0;
+        hlslInfo.props = SDL_CreateProperties();
+
+        if (enableDebug) {
+            SDL_SetBooleanProperty(hlslInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+            SDL_SetStringProperty(hlslInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, filename);
+        }
+
+        if (cullUnusedBindings) {
+            SDL_SetBooleanProperty(hlslInfo.props, SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL, true);
+        }
 
         switch (destinationFormat) {
             case SHADERFORMAT_DXBC: {
@@ -657,12 +666,19 @@ int main(int argc, char *argv[])
                     spirvInfo.bytecode_size = bytecodeSize;
                     spirvInfo.entrypoint = entrypointName;
                     spirvInfo.shader_stage = shaderStage;
-                    spirvInfo.cull_unused_bindings = cullUnusedBindings;
-                    spirvInfo.enable_debug = enableDebug;
                     spirvInfo.props = SDL_CreateProperties();
+
+                    if (enableDebug) {
+                        SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+                        SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, filename);
+                    }
+                    if (cullUnusedBindings) {
+                        SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+                    }
                     if (mslVersion) {
                         SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, mslVersion);
                     }
+
                     char *buffer = SDL_ShaderCross_TranspileMSLFromSPIRV(
                         &spirvInfo);
                     if (buffer == NULL) {
@@ -708,10 +724,15 @@ int main(int argc, char *argv[])
                 spirvInfo.bytecode_size = bytecodeSize;
                 spirvInfo.entrypoint = entrypointName;
                 spirvInfo.shader_stage = shaderStage;
-                spirvInfo.cull_unused_bindings = cullUnusedBindings;
-                spirvInfo.enable_debug = enableDebug;
                 spirvInfo.props = SDL_CreateProperties();
 
+                if (enableDebug) {
+                    SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+                    SDL_SetStringProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, filename);
+                }
+                if (cullUnusedBindings) {
+                    SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL, true);
+                }
                 if (psslCompat) {
                     SDL_SetBooleanProperty(spirvInfo.props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, true);
                 }
@@ -782,6 +803,8 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+
+        SDL_DestroyProperties(hlslInfo.props);
     }
 
     SDL_CloseIO(outputIO);
