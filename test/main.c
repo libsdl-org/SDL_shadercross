@@ -67,13 +67,15 @@ static int SDLCALL shadercross_CompileHLSL_to_XXX(void *args)
         hlsl_info.source = (const char *)simple_vert_hlsl;
         hlsl_info.entrypoint = "main";
         hlsl_info.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_VERTEX;
-        hlsl_info.enable_debug = true;
-        hlsl_info.name = "Simple shader";
+        hlsl_info.props = SDL_CreateProperties();
+        SDL_SetBooleanProperty(hlsl_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+        SDL_SetStringProperty(hlsl_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, "Simple shader");
         shader_size = 0;
         shader = cases[i].compile_XXXFromHLSL(&hlsl_info, &shader_size);
         SDLTest_AssertCheck(shader != NULL, "%s should return a valid compiled DXBC shader (%s)", cases[i].funcname, SDL_GetError());
         SDLTest_AssertCheck(shader_size != 0, "Size of shader returned by %s should be size > 0", cases[i].funcname);
         SDL_free(shader);
+        SDL_DestroyProperties(hlsl_info.props);
         SDL_ClearError();
 
         SDLTest_AssertPass("Break a HLSL vertex shader by defining a macro");
@@ -163,13 +165,15 @@ static int SDLCALL shadercross_CompileSPIRV_to_XXX(void *args)
         spirv_info.bytecode_size = spirv_shader_size;
         spirv_info.entrypoint = "main";
         spirv_info.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_VERTEX;
-        spirv_info.enable_debug = true;
-        spirv_info.name = "Simple shader";
+        spirv_info.props = SDL_CreateProperties();
+        SDL_SetBooleanProperty(spirv_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+        SDL_SetStringProperty(spirv_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, "Simple shader");
         shader_size = 0;
         shader = cases[i].compile_XXXFromSPIRV(&spirv_info, &shader_size);
         SDLTest_AssertCheck(shader != NULL, "%s should return a valid compiled DXBC shader (%s)", cases[i].funcname, SDL_GetError());
         SDLTest_AssertCheck(shader_size != 0, "Size of shader returned by %s should be size > 0", cases[i].funcname);
         SDL_free(shader);
+        SDL_DestroyProperties(spirv_info.props);
         SDL_ClearError();
     }
     SDL_free(spirv_shader);
