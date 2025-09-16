@@ -22,16 +22,21 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlcpu.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlplatform.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlmanpages.cmake")
 
-if(NOT TARGET SDL3::SDL3-static AND NOT TARGET SDL3::SDL3)
-    find_package(SDL3 ${SDL_REQUIRED_VERSION})
-endif()
-
 if(BUILD_SHARED_LIBS)
 	set(SDLSHADERCROSS_SHARED_DEFAULT ON)
 	set(SDLSHADERCROSS_STATIC_DEFAULT OFF)
+
+	set(sdl3_target_name SDL3::SDL3-shared)
+    list(APPEND sdl_required_components SDL3-shared)
 else()
 	set(SDLSHADERCROSS_SHARED_DEFAULT OFF)
 	set(SDLSHADERCROSS_STATIC_DEFAULT ON)
+
+	set(sdl3_target_name SDL3::SDL3)
+endif()
+
+if(NOT TARGET SDL3::Headers OR NOT TARGET ${sdl3_target_name})
+    find_package(SDL3 ${SDL_REQUIRED_VERSION} REQUIRED COMPONENTS ${sdl_required_components})
 endif()
 
 # Options
