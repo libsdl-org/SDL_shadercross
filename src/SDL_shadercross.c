@@ -1621,13 +1621,18 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
 }
 
 size_t SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(
+    spvc_compiler compiler,
     spvc_reflected_resource* reflected_resources,
     size_t num_vars)
 {
     size_t total_string_size = 0;
     for (size_t i = 0; i < num_vars; i++) {
         spvc_reflected_resource* resource = &reflected_resources[i];
-        total_string_size += SDL_strlen(resource->name) + 1;
+        spvc_type type = spvc_compiler_get_type_handle(compiler, resource->base_type_id);
+
+        for (size_t j = 0; j < spvc_type_get_columns(type); j++) {
+            total_string_size += SDL_strlen(resource->name) + 1;
+        }
     }
     return total_string_size;
 }
@@ -1640,58 +1645,65 @@ void SDL_ShaderCross_INTERNAL_GetIOVars(
     char *name_buffer
 ) {
     size_t name_buffer_offset = 0;
+    uint32_t var_count = 0;
+
     for (size_t i = 0; i < num_vars; i++) {
-        SDL_ShaderCross_IOVarMetadata* var = &vars[i];
         spvc_reflected_resource* resource = &reflected_resources[i];
         spvc_type type = spvc_compiler_get_type_handle(compiler, resource->base_type_id);
 
-        switch (spvc_type_get_basetype(type)) {
-        case SPVC_BASETYPE_INT8:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT8;
-            break;
-        case SPVC_BASETYPE_UINT8:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT8;
-            break;
-        case SPVC_BASETYPE_INT16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT16;
-            break;
-        case SPVC_BASETYPE_UINT16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT16;
-            break;
-        case SPVC_BASETYPE_INT32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT32;
-            break;
-        case SPVC_BASETYPE_UINT32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT32;
-            break;
-        case SPVC_BASETYPE_INT64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT64;
-            break;
-        case SPVC_BASETYPE_UINT64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT64;
-            break;
-        case SPVC_BASETYPE_FP16:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16;
-            break;
-        case SPVC_BASETYPE_FP32:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32;
-            break;
-        case SPVC_BASETYPE_FP64:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64;
-            break;
-        default:
-            var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN;
-            break;
+        for (Uint32 j = 0; j < spvc_type_get_columns(type); j += 1) {
+            SDL_ShaderCross_IOVarMetadata* var = &vars[var_count];
+
+            switch (spvc_type_get_basetype(type)) {
+            case SPVC_BASETYPE_INT8:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT8;
+                break;
+            case SPVC_BASETYPE_UINT8:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT8;
+                break;
+            case SPVC_BASETYPE_INT16:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT16;
+                break;
+            case SPVC_BASETYPE_UINT16:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT16;
+                break;
+            case SPVC_BASETYPE_INT32:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT32;
+                break;
+            case SPVC_BASETYPE_UINT32:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT32;
+                break;
+            case SPVC_BASETYPE_INT64:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_INT64;
+                break;
+            case SPVC_BASETYPE_UINT64:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UINT64;
+                break;
+            case SPVC_BASETYPE_FP16:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16;
+                break;
+            case SPVC_BASETYPE_FP32:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32;
+                break;
+            case SPVC_BASETYPE_FP64:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_FLOAT64;
+                break;
+            default:
+                var->vector_type = SDL_SHADERCROSS_IOVAR_TYPE_UNKNOWN;
+                break;
+            }
+
+            var->vector_size = spvc_type_get_vector_size(type);
+
+            var->name = name_buffer + name_buffer_offset;
+            size_t length_name = SDL_strlen(resource->name) + 1;
+            SDL_memcpy(var->name, resource->name, length_name);
+            name_buffer_offset += length_name;
+
+            var->location = spvc_compiler_get_decoration(compiler, resource->id, SpvDecorationLocation) + j;
+
+            var_count += 1;
         }
-
-        Uint32 vector_size = spvc_type_get_vector_size(type);
-        var->vector_size = vector_size;
-
-        var->name = name_buffer + name_buffer_offset;
-        size_t length_name = SDL_strlen(resource->name) + 1;
-        SDL_memcpy(var->name, resource->name, length_name);
-        name_buffer_offset += length_name;
-        var->location = spvc_compiler_get_decoration(compiler, resource->id, SpvDecorationLocation);
     }
 }
 
@@ -1712,8 +1724,10 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     size_t num_uniform_buffers = 0;
     size_t string_length_input;
     size_t num_inputs = 0;
+    size_t num_total_inputs = 0; // matrices are 1 input per column
     size_t string_length_output;
     size_t num_outputs = 0;
+    size_t num_total_outputs = 0; // matrices are 1 output per column
     size_t num_separate_samplers = 0; // HLSL edge case
     size_t num_separate_images = 0; // HLSL edge case
     (void) metadataProps;
@@ -1844,7 +1858,15 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         spvc_context_destroy(context);
         return NULL;
     }
-    string_length_input = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(reflected_resources, num_inputs);
+
+    string_length_input = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(compiler, reflected_resources, num_inputs);
+
+    // Calculate total inputs in case there are matrices
+    for (size_t i = 0; i < num_inputs; i++) {
+        spvc_reflected_resource* resource = &reflected_resources[i];
+        spvc_type type = spvc_compiler_get_type_handle(compiler, resource->base_type_id);
+        num_total_inputs += spvc_type_get_columns(type);
+    }
 
     // Outputs (stage 1: count number of outputs, and name lengths)
     result = spvc_resources_get_resource_list_for_type(
@@ -1857,11 +1879,19 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
         spvc_context_destroy(context);
         return NULL;
     }
-    string_length_output = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(reflected_resources, num_outputs);
+
+    string_length_output = SDL_ShaderCross_INTERNAL_GetIOVarsStringLength(compiler, reflected_resources, num_outputs);
+
+    // Calculate total outputs in case there are matrices
+    for (size_t i = 0; i < num_outputs; i++) {
+        spvc_reflected_resource* resource = &reflected_resources[i];
+        spvc_type type = spvc_compiler_get_type_handle(compiler, resource->base_type_id);
+        num_total_outputs += spvc_type_get_columns(type);
+    }
 
     size_t offset_inputs = SDL_upper_multiple_power2(sizeof(SDL_ShaderCross_GraphicsShaderMetadata), sizeof(size_t));
-    size_t offset_outputs = offset_inputs + num_inputs * sizeof(SDL_ShaderCross_IOVarMetadata);
-    size_t offset_inputnames = offset_outputs + num_outputs * sizeof(SDL_ShaderCross_IOVarMetadata);
+    size_t offset_outputs = offset_inputs + num_total_inputs * sizeof(SDL_ShaderCross_IOVarMetadata);
+    size_t offset_inputnames = offset_outputs + num_total_outputs * sizeof(SDL_ShaderCross_IOVarMetadata);
     size_t offset_outputnames = offset_inputnames + string_length_input;
 
     char *allocMemory = SDL_malloc(offset_outputnames + string_length_output);
@@ -1909,8 +1939,8 @@ SDL_ShaderCross_GraphicsShaderMetadata * SDL_ShaderCross_ReflectGraphicsSPIRV(
     allocMetadata->resource_info.num_storage_textures = num_storage_textures;
     allocMetadata->resource_info.num_storage_buffers = num_storage_buffers;
     allocMetadata->resource_info.num_uniform_buffers = num_uniform_buffers;
-    allocMetadata->num_inputs = num_inputs;
-    allocMetadata->num_outputs = num_outputs;
+    allocMetadata->num_inputs = num_total_inputs;
+    allocMetadata->num_outputs = num_total_outputs;
 
     return allocMetadata;
 }
