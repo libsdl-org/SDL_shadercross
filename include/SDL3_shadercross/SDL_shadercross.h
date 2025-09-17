@@ -158,6 +158,10 @@ extern SDL_DECLSPEC SDL_GPUShaderFormat SDLCALL SDL_ShaderCross_GetSPIRVShaderFo
  *
  * You must SDL_free the returned string once you are done with it.
  *
+ * These are the optional properties that can be used:
+ *
+ * - `SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION`: specifies the MSL version that should be emitted. Defaults to 1.2.0.
+ *
  * \param info a struct describing the shader to transpile.
  * \returns an SDL_malloc'd string containing MSL code.
  */
@@ -168,6 +172,10 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_TranspileMSLFromSPIRV(
  * Transpile to HLSL code from SPIRV code.
  *
  * You must SDL_free the returned string once you are done with it.
+ *
+ * These are the optional properties that can be used:
+ *
+ * - `SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY`: generates PSSL-compatible shader.
  *
  * \param info a struct describing the shader to transpile.
  * \returns an SDL_malloc'd string containing HLSL code.
@@ -279,6 +287,12 @@ extern SDL_DECLSPEC SDL_GPUShaderFormat SDLCALL SDL_ShaderCross_GetHLSLShaderFor
  *
  * You must SDL_free the returned buffer once you are done with it.
  *
+ * These are the optional properties that can be used:
+ *
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL`: allows debug info to be emitted when relevant. Should only be used with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL`: a UTF-8 name to be used with the shader. Relevant for use with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL`: When true, indicates that the compiler should not cull unused shader resources. This behavior is disabled by default.
+ *
  * \param info a struct describing the shader to transpile.
  * \param size filled in with the bytecode buffer size.
  * \returns an SDL_malloc'd buffer containing DXBC bytecode.
@@ -294,6 +308,12 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXBCFromHLSL(
  *
  * You must SDL_free the returned buffer once you are done with it.
  *
+ * These are the optional properties that can be used:
+ *
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL`: allows debug info to be emitted when relevant. Should only be used with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING`: a UTF-8 name to be used with the shader. Relevant for use with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL`: when true, indicates that the compiler should not cull unused shader resources. This behavior is disabled by default.
+ *
  * \param info a struct describing the shader to transpile.
  * \param size filled in with the bytecode buffer size.
  * \returns an SDL_malloc'd buffer containing DXIL bytecode.
@@ -308,6 +328,12 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileDXILFromHLSL(
  * Compile to SPIRV bytecode from HLSL code.
  *
  * You must SDL_free the returned buffer once you are done with it.
+ *
+ * These are the optional properties that can be used:
+ *
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL`: allows debug info to be emitted when relevant. Should only be used with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING`: a UTF-8 name to be used with the shader. Relevant for use with debugging tools like Renderdoc.
+ * - `SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL`: when true, indicates that the compiler should not cull unused shader resources. This behavior is disabled by default.
  *
  * \param info a struct describing the shader to transpile.
  * \param size filled in with the bytecode buffer size.
