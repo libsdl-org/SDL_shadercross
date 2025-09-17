@@ -111,8 +111,8 @@ typedef struct SDL_ShaderCross_SPIRV_Info
 #define SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING "SDL_shadercross.spirv.debug.name"
 #define SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL "SDL_shadercross.spirv.cull_unused_bindings"
 
-#define SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY "SDL.shadercross.spirv.pssl.compatibility"
-#define SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION "SDL.shadercross.spirv.msl.version"
+#define SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY "SDL_shadercross.spirv.pssl.compatibility"
+#define SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION "SDL_shadercross.spirv.msl.version"
 
 typedef struct SDL_ShaderCross_HLSL_Define
 {
