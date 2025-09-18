@@ -25,18 +25,9 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlmanpages.cmake")
 if(BUILD_SHARED_LIBS)
 	set(SDLSHADERCROSS_SHARED_DEFAULT ON)
 	set(SDLSHADERCROSS_STATIC_DEFAULT OFF)
-
-	set(sdl3_target_name SDL3::SDL3-shared)
-    list(APPEND sdl_required_components SDL3-shared)
 else()
 	set(SDLSHADERCROSS_SHARED_DEFAULT OFF)
 	set(SDLSHADERCROSS_STATIC_DEFAULT ON)
-
-	set(sdl3_target_name SDL3::SDL3)
-endif()
-
-if(NOT TARGET SDL3::Headers OR NOT TARGET ${sdl3_target_name})
-    find_package(SDL3 ${SDL_REQUIRED_VERSION} REQUIRED COMPONENTS ${sdl_required_components})
 endif()
 
 # Options
@@ -56,6 +47,10 @@ cmake_dependent_option(SDLSHADERCROSS_INSTALL_RUNTIME "Download, build and insta
 
 option(SDLSHADERCROSS_TESTS "Build unit tests?" OFF)
 cmake_dependent_option(SDLSHADERCROSS_TESTS_TRACKMEM "Enable memory tracking in tests" OFF SDLSHADERCROSS_TESTS OFF)
+
+if((SDLSHADERCROSS_STATIC AND NOT TARGET SDL3::SDL3) OR (SDLSHADERCROSS_SHARED AND NOT TARGET SDL3::SDL3-shared))
+    find_package(SDL3 ${SDL_REQUIRED_VERSION} REQUIRED)
+endif()
 
 sdl_calculate_derived_version_variables(${MAJOR_VERSION} ${MINOR_VERSION} ${MICRO_VERSION})
 SDL_DetectTargetCPUArchitectures(SDL_CPU_NAMES)
