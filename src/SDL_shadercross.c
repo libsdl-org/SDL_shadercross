@@ -447,7 +447,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         args[argCount++] = (LPCWSTR)L"-spirv";
         args[argCount++] = (LPCWSTR)L"-fspv-flatten-resource-arrays";
 
-        if (!SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOL, false))
+        if (!SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_CULL_UNUSED_BINDINGS_BOOLEAN, false))
         {
             args[argCount++] = (LPCWSTR)L"-fspv-preserve-bindings";
         }
@@ -455,7 +455,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         args[argCount++] = (LPCWSTR)L"-fspv-preserve-interface";
     }
 
-    if (SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, false)) {
+    if (SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOLEAN, false)) {
         if (spirv) {
             // https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#debugging
             args[argCount++] = (LPCWSTR)L"-fspv-debug=vulkan-with-source";
@@ -799,7 +799,7 @@ void *SDL_ShaderCross_INTERNAL_CompileDXBCFromHLSL(
         transpiledSource != NULL ? transpiledSource : info->source,
         info->entrypoint,
         shaderProfile,
-        SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, false));
+        SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOLEAN, false));
 
     if (blob == NULL) {
         SDL_free(transpiledSource);
@@ -915,7 +915,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL, shadermodel);
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV, 1);
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_FLATTEN_MATRIX_VERTEX_INPUT_SEMANTICS, 1);
-        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_USE_ENTRY_POINT_NAME, !SDL_GetBooleanProperty(props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, false));
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_USE_ENTRY_POINT_NAME, !SDL_GetBooleanProperty(props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY_BOOLEAN, false));
         spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_POINT_SIZE_COMPAT, true);
     }
 
@@ -933,7 +933,7 @@ static SPIRVTranspileContext *SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
     }
 
     if (backend == SPVC_BACKEND_MSL) {
-        const char *_mslVersion = SDL_GetStringProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION, "1.2.0");
+        const char *_mslVersion = SDL_GetStringProperty(props, SDL_SHADERCROSS_PROP_SPIRV_MSL_VERSION_STRING, "1.2.0");
         int mslVersion = parse_version_number(_mslVersion);
         if (mslVersion == - 1) {
             SDL_SetError("failed to parse MSL version string \"%s\"", _mslVersion);
@@ -2335,7 +2335,7 @@ void *SDL_ShaderCross_TranspileHLSLFromSPIRV(
 
     SPIRVTranspileContext *context = SDL_ShaderCross_INTERNAL_TranspileFromSPIRV(
         SPVC_BACKEND_HLSL,
-        SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY, false) ? 50 : 60,
+        SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SPIRV_PSSL_COMPATIBILITY_BOOLEAN, false) ? 50 : 60,
         info->shader_stage,
         info->bytecode,
         info->bytecode_size,
