@@ -68,7 +68,7 @@ static int SDLCALL shadercross_CompileHLSL_to_XXX(void *args)
         hlsl_info.entrypoint = "main";
         hlsl_info.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_VERTEX;
         hlsl_info.props = SDL_CreateProperties();
-        SDL_SetBooleanProperty(hlsl_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+        SDL_SetBooleanProperty(hlsl_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOLEAN, true);
         SDL_SetStringProperty(hlsl_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, "Simple shader");
         shader_size = 0;
         shader = cases[i].compile_XXXFromHLSL(&hlsl_info, &shader_size);
@@ -166,7 +166,7 @@ static int SDLCALL shadercross_CompileSPIRV_to_XXX(void *args)
         spirv_info.entrypoint = "main";
         spirv_info.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_VERTEX;
         spirv_info.props = SDL_CreateProperties();
-        SDL_SetBooleanProperty(spirv_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOL, true);
+        SDL_SetBooleanProperty(spirv_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOLEAN, true);
         SDL_SetStringProperty(spirv_info.props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_NAME_STRING, "Simple shader");
         shader_size = 0;
         shader = cases[i].compile_XXXFromSPIRV(&spirv_info, &shader_size);
