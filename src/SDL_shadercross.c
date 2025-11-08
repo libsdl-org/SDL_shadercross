@@ -2650,3 +2650,28 @@ SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats(void)
 
     return supportedFormats;
 }
+
+SDL_GPUVertexElementFormat SDL_ShaderCross_GPUVertexElementFormatFromIOVarMetadata(
+    const SDL_ShaderCross_IOVarMetadata *meta)
+{
+    if (meta == NULL) {
+        SDL_InvalidParamError("metadata");
+        return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
+    }
+
+    switch (meta->vector_type) {
+    case SDL_SHADERCROSS_IOVAR_TYPE_INT8: return SDL_GPU_VERTEXELEMENTFORMAT_BYTE2 + meta->vector_size/2 - 1;
+    case SDL_SHADERCROSS_IOVAR_TYPE_UINT8: return SDL_GPU_VERTEXELEMENTFORMAT_UBYTE2 + meta->vector_size/2 - 1;
+
+    case SDL_SHADERCROSS_IOVAR_TYPE_INT16: return SDL_GPU_VERTEXELEMENTFORMAT_SHORT2 + meta->vector_size/2 - 1;
+    case SDL_SHADERCROSS_IOVAR_TYPE_UINT16: return SDL_GPU_VERTEXELEMENTFORMAT_USHORT2 + meta->vector_size/2 - 1;
+    case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT16: return SDL_GPU_VERTEXELEMENTFORMAT_HALF2 + meta->vector_size/2 - 1;
+
+    case SDL_SHADERCROSS_IOVAR_TYPE_INT32: return SDL_GPU_VERTEXELEMENTFORMAT_INT + meta->vector_size - 1;
+    case SDL_SHADERCROSS_IOVAR_TYPE_UINT32: return SDL_GPU_VERTEXELEMENTFORMAT_UINT + meta->vector_size - 1;
+    case SDL_SHADERCROSS_IOVAR_TYPE_FLOAT32: return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT + meta->vector_size - 1;
+
+    /* SDL_gpu api does not include 64-bit types in SDL_GPUVertexElementFormat */
+    default: return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
+    }
+}
