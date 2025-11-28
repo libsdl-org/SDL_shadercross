@@ -52,6 +52,7 @@ jobs:
           version: 3-head
           sdl-test: true
           shell: ${{ matrix.platform.shell }}
+          install-linux-dependencies: true
           discriminator: ${{ matrix.platform.artifact }}
       - name: Install Linux requirements
         if: ${{ contains(matrix.platform.os, 'ubuntu') }}
