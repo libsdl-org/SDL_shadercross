@@ -2429,9 +2429,10 @@ void *SDL_ShaderCross_CompileDXILFromSPIRV(
     hlslInfo.shader_stage = info->shader_stage;
     hlslInfo.props = info->props;
 
-    void *result = SDL_ShaderCross_CompileDXILFromHLSL(
-        &hlslInfo,
-        size);
+    void *result = SDL_ShaderCross_INTERNAL_CompileUsingDXC(
+      &hlslInfo,
+      false,
+      size);
 
     SDL_ShaderCross_INTERNAL_DestroyTranspileContext(context);
     return result;
