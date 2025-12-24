@@ -654,6 +654,15 @@ typedef void ID3DInclude;      /* hack, unused */
 #define D3DCOMPILER_DLL "libvkd3d-utils.so.1"
 #endif
 
+#ifdef SDL_ELF_NOTE_DLOPEN
+SDL_ELF_NOTE_DLOPEN(
+    "dxbc",
+    "Create DXBC shaders from HLSL",
+    SDL_ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED,
+    D3DCOMPILER_DLL
+)
+#endif
+
 /* __stdcall declaration, largely taken from vkd3d_windows.h */
 #ifndef _WIN32
 #ifdef __stdcall
