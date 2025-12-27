@@ -22,10 +22,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlcpu.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlplatform.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sdlmanpages.cmake")
 
-if(NOT TARGET SDL3::SDL3-static)
-    find_package(SDL3 ${SDL_REQUIRED_VERSION})
-endif()
-
 if(BUILD_SHARED_LIBS)
 	set(SDLSHADERCROSS_SHARED_DEFAULT ON)
 	set(SDLSHADERCROSS_STATIC_DEFAULT OFF)
@@ -34,10 +30,17 @@ else()
 	set(SDLSHADERCROSS_STATIC_DEFAULT ON)
 endif()
 
-# Options
-option(SDLSHADERCROSS_DXC "Enable HLSL compilation via DXC" ON)
+# Configure shared/static options first
 option(SDLSHADERCROSS_SHARED "Build shared SDL_shadercross library" ${SDLSHADERCROSS_SHARED_DEFAULT})
 option(SDLSHADERCROSS_STATIC "Build static SDL_shadercross library" ${SDLSHADERCROSS_STATIC_DEFAULT})
+
+# Find SDL3 (if not already available)
+if((SDLSHADERCROSS_STATIC AND NOT TARGET SDL3::SDL3) OR (SDLSHADERCROSS_SHARED AND NOT TARGET SDL3::SDL3-shared))
+    find_package(SDL3 ${SDL_REQUIRED_VERSION} REQUIRED)
+endif()
+
+# Configure remaining shadercross options
+option(SDLSHADERCROSS_DXC "Enable HLSL compilation via DXC" ON)
 option(SDLSHADERCROSS_SPIRVCROSS_SHARED "Link to shared library variants of dependencies" ON)
 option(SDLSHADERCROSS_VENDORED "Use vendored dependencies" OFF)
 option(SDLSHADERCROSS_CLI "Build command line executable" ON)
