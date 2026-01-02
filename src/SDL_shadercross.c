@@ -453,6 +453,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileUsingDXC(
         }
 
         args[argCount++] = (LPCWSTR)L"-fspv-preserve-interface";
+        args[argCount++] = (LPCWSTR)L"-fspv-target-env=vulkan1.1";
     }
 
     if (SDL_GetBooleanProperty(info->props, SDL_SHADERCROSS_PROP_SHADER_DEBUG_ENABLE_BOOLEAN, false)) {
