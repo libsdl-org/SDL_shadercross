@@ -660,7 +660,7 @@ SDL_ELF_NOTE_DLOPEN(
     "Create DXBC shaders from HLSL",
     SDL_ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED,
     D3DCOMPILER_DLL
-)
+);
 #endif
 
 /* __stdcall declaration, largely taken from vkd3d_windows.h */
