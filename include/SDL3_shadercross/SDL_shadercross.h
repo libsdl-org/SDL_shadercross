@@ -345,6 +345,12 @@ extern SDL_DECLSPEC void * SDLCALL SDL_ShaderCross_CompileSPIRVFromHLSL(
     const SDL_ShaderCross_HLSL_Info *info,
     size_t *size);
 
+/**
+ * Returns the SDL_GPUVertexElementFormat from a variable's SDL_ShaderCross_IOVarMetadata
+*/
+extern SDL_DECLSPEC SDL_GPUVertexElementFormat SDLCALL SDL_ShaderCross_GPUVertexElementFormatFromIOVarMetadata(
+    const SDL_ShaderCross_IOVarMetadata *meta);
+
 #ifdef __cplusplus
 }
 #endif
